@@ -13,13 +13,16 @@ my $readerMatch;
 my $action;
 my $name;
 my $key;
+my $challenge;
 
 GetOptions("reader=s" => \$readerMatch,
            "list" => \&set_action,
            "put" => \&set_action,
            "delete" => \&set_action,
            "name=s" => \$name,
-           "key=s" => \$key);
+           "key=s" => \$key,
+           "calculate" => \&set_action,
+           "challenge=s" => \$challenge);
 
 my $reader;
 
@@ -76,6 +79,23 @@ if($action eq 'delete') {
   my $len = scalar(@name_p) + 2;
   my @apdu = (0x00, 0x02, 0x00, 0x00, $len, 0x7a, scalar(@name_p), @name_p);
   my $repl = $card->Transmit(\@apdu);
+}
+
+if($action eq 'calculate') {
+  die "No name specified." unless $name;
+  die "No challenge specified." unless $challenge;
+
+  my @name_p = unpack("C*", $name);
+  warn $challenge;
+  my @chal_p = Chipcard::PCSC::ascii_to_array($challenge);
+  my $len = scalar(@name_p) + 2 + scalar(@chal_p) + 2;
+  my @apdu = (0x00, 0xa2, 0x00, 0x00, $len, 0x7a, scalar(@name_p), @name_p, 0x7d, scalar(@chal_p), @chal_p);
+  my $RecvData = $card->Transmit(\@apdu);
+
+ print "  Recv = ";
+  foreach my $tmpVal (@{$RecvData}) {
+         printf ("%02X ", $tmpVal);
+          } print "\n";
 }
 
 sub get_len {
