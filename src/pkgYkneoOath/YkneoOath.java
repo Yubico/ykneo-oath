@@ -39,6 +39,11 @@ public class YkneoOath extends Applet {
 			}
 			break;
 		case (byte)0x02: // delete
+			if(p1p2 == 0x0000) {
+				handleDelete(buf);
+			}  else {
+				ISOException.throwIt(ISO7816.SW_WRONG_P1P2);
+			}
 			break;
 		case (byte)0xa1: // list
 			break;
@@ -46,6 +51,20 @@ public class YkneoOath extends Applet {
 			break;
 		default:
 			ISOException.throwIt(ISO7816.SW_INS_NOT_SUPPORTED);
+		}
+	}
+
+	private void handleDelete(byte[] buf) {
+		short offs = ISO7816.OFFSET_CDATA;
+		if(buf[offs++] != 0x7a) {
+			ISOException.throwIt(ISO7816.SW_WRONG_DATA);
+		}
+		short len = getLength(buf, offs++);
+		offs += getLengthBytes(len);
+		OathObj object = OathObj.findObject(buf, offs, len);
+		if(object != null) {
+			object.removeObject();
+			JCSystem.requestObjectDeletion();
 		}
 	}
 
