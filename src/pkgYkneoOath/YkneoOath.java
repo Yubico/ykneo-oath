@@ -15,6 +15,12 @@ import javacard.framework.Util;
 public class YkneoOath extends Applet {
 	
 	private short _0 = 0;
+	
+	private byte[] tempBuf;
+
+	public YkneoOath() {
+		tempBuf = JCSystem.makeTransientByteArray((short) 512, JCSystem.CLEAR_ON_DESELECT);
+	}
 
 	public static void install(byte[] bArray, short bOffset, byte bLength) {
 		new YkneoOath().register(bArray, (short) (bOffset + 1), bArray[bOffset]);
@@ -67,15 +73,18 @@ public class YkneoOath extends Applet {
 	}
 
 	private short handleList(byte[] buf) {
-		short offs = 0;
-		buf[offs++] = (byte) 0xa1;
+		short len = 0;
 		OathObj object = OathObj.firstObject;
 		while(object != null) {
-			offs += setLength(buf, offs, object.getNameLength());
-			offs += object.getName(buf, offs);
+			len += setLength(tempBuf, len, object.getNameLength());
+			len += object.getName(tempBuf, len);
 			object = object.nextObject;
 		}
-		return offs;
+		
+		short offs = 0;
+		buf[offs++] = (byte) 0xa1;
+		offs += setLength(buf, offs, len);
+		return Util.arrayCopy(tempBuf, _0, buf, offs, len);
 	}
 
 	private void handleDelete(byte[] buf) {

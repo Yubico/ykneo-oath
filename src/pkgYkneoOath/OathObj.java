@@ -48,7 +48,8 @@ public class OathObj {
 	}
 	
 	public short getName(byte[] buf, short offs) {
-		return Util.arrayCopy(name, _0, buf, offs, (short) name.length);
+		Util.arrayCopy(name, _0, buf, offs, (short) name.length);
+		return (short) name.length;
 	}
 	
 	public short getNameLength() {
