@@ -12,9 +12,9 @@ public class OathObj {
 	
 	private static short _0 = 0;
 	
-	private static OathObj firstObject;
-	private static OathObj lastObject;
-	private OathObj nextObject;
+	public static OathObj firstObject;
+	public static OathObj lastObject;
+	public OathObj nextObject;
 	
 	private byte[] key;
 	private byte[] name;
@@ -40,6 +40,14 @@ public class OathObj {
 	public void setName(byte[] buf, short offs, short len) {
 		name = new byte[len];
 		Util.arrayCopy(buf, offs, name, _0, len);
+	}
+	
+	public short getName(byte[] buf, short offs) {
+		return Util.arrayCopy(name, _0, buf, offs, (short) name.length);
+	}
+	
+	public short getNameLength() {
+		return (short) name.length;
 	}
 	
 	public void setProp(byte props) {

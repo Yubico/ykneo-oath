@@ -13,6 +13,8 @@ import javacard.framework.JCSystem;
 import javacard.framework.Util;
 
 public class YkneoOath extends Applet {
+	
+	private short _0 = 0;
 
 	public static void install(byte[] bArray, short bOffset, byte bLength) {
 		new YkneoOath().register(bArray, (short) (bOffset + 1), bArray[bOffset]);
@@ -25,6 +27,7 @@ public class YkneoOath extends Applet {
 
 		byte[] buf = apdu.getBuffer();
 		short recvLen = apdu.setIncomingAndReceive();
+		short sendLen = 0;
 		
 		byte p1 = buf[ISO7816.OFFSET_P1];
 		byte p2 = buf[ISO7816.OFFSET_P2];
@@ -41,17 +44,38 @@ public class YkneoOath extends Applet {
 		case (byte)0x02: // delete
 			if(p1p2 == 0x0000) {
 				handleDelete(buf);
-			}  else {
+			} else {
 				ISOException.throwIt(ISO7816.SW_WRONG_P1P2);
 			}
 			break;
 		case (byte)0xa1: // list
+			if(p1p2 == 0x0000) {
+				sendLen = handleList(buf);
+			} else {
+				ISOException.throwIt(ISO7816.SW_WRONG_P1P2);
+			}
 			break;
 		case (byte)0xa2: // calculate
 			break;
 		default:
 			ISOException.throwIt(ISO7816.SW_INS_NOT_SUPPORTED);
 		}
+		
+		if(sendLen > 0) {
+			apdu.setOutgoingAndSend(_0 , sendLen);
+		}
+	}
+
+	private short handleList(byte[] buf) {
+		short offs = 0;
+		buf[offs++] = 0x1a;
+		OathObj object = OathObj.firstObject;
+		while(object != null) {
+			offs += setLength(buf, offs, object.getNameLength());
+			offs += object.getName(buf, offs);
+			object = object.nextObject;
+		}
+		return offs;
 	}
 
 	private void handleDelete(byte[] buf) {
@@ -124,6 +148,21 @@ public class YkneoOath extends Applet {
 		} else if(len <= (short)0x00ff) {
 			return 2;
 		} else {
+			return 3;
+		}
+	}
+	
+	private short setLength(byte[] buf, short offs, short len) {
+		if(len < (short)0x0080) {
+			buf[offs] = (byte) len;
+			return 1;
+		} else if(len <= (short)0x00ff) {
+			buf[offs++] = (byte)0x81;
+			buf[offs] = (byte) len;
+			return 2;
+		} else {
+			buf[offs++] = (byte)0x82;
+			Util.setShort(buf, offs, len);
 			return 3;
 		}
 	}
