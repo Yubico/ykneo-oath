@@ -88,19 +88,15 @@ if($action eq 'calculate') {
   die "No challenge specified." unless $challenge;
 
   my @name_p = unpack("C*", $name);
-  warn $challenge;
   my $chal_p = Chipcard::PCSC::ascii_to_array($challenge);
   my $len = scalar(@name_p) + 2 + scalar(@$chal_p) + 2;
   my @apdu = (0x00, 0xa2, 0x00, 0x00, $len, 0x7a, scalar(@name_p), @name_p, 0x7d, scalar(@$chal_p), @$chal_p);
-  foreach my $tmp (@apdu) {
-    printf("%02x ", $tmp);
-  } print "\n";
-  my $RecvData = $card->Transmit(\@apdu);
+  my $repl = $card->Transmit(\@apdu);
 
- print "  Recv = ";
-  foreach my $tmpVal (@{$RecvData}) {
-         printf ("%02X ", $tmpVal);
-          } print "\n";
+  print "  Recv = ";
+  foreach my $tmpVal (@{$repl}) {
+    printf ("%02X ", $tmpVal);
+  } print "\n";
 }
 
 sub get_len {
