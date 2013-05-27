@@ -93,12 +93,14 @@ public class YkneoOath extends Applet {
 		if(buf[offs++] != 0x7a) {
 			ISOException.throwIt(ISO7816.SW_WRONG_DATA);
 		}
-		short len = getLength(buf, offs++);
+		short len = getLength(buf, offs);
 		offs += getLengthBytes(len);
 		OathObj object = OathObj.findObject(buf, offs, len);
 		if(object != null) {
 			object.removeObject();
 			JCSystem.requestObjectDeletion();
+		} else {
+			ISOException.throwIt(ISO7816.SW_DATA_INVALID);
 		}
 	}
 
