@@ -82,6 +82,7 @@ public class OathObj {
 				lastObject = object;
 			}
 		}
+		this.nextObject = null;
 	}
 	
 	public static OathObj findObject(byte[] name, short offs, short len) {
