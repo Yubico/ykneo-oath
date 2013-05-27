@@ -1,5 +1,10 @@
 package pkgYkneoOath;
 
+/*
+ * Copyright (c) 2013 Yubico AB
+ * All rights reserved.
+ */
+
 import javacard.framework.ISO7816;
 import javacard.framework.ISOException;
 import javacard.framework.Util;
