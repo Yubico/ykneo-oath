@@ -68,7 +68,7 @@ public class YkneoOath extends Applet {
 
 	private short handleList(byte[] buf) {
 		short offs = 0;
-		buf[offs++] = 0x1a;
+		buf[offs++] = (byte) 0xa1;
 		OathObj object = OathObj.firstObject;
 		while(object != null) {
 			offs += setLength(buf, offs, object.getNameLength());
@@ -97,7 +97,7 @@ public class YkneoOath extends Applet {
 		if(buf[offs++] != 0x7a) {
 			ISOException.throwIt(ISO7816.SW_WRONG_DATA);
 		}
-		short len = getLength(buf, offs++);
+		short len = getLength(buf, offs);
 		offs += getLengthBytes(len);
 		OathObj object = OathObj.findObject(buf, offs, len);
 		if(object == null) {
@@ -130,7 +130,7 @@ public class YkneoOath extends Applet {
 	
 	private short getLength(byte[] buf, short offs) {
 		short length = 0;
-		if(buf[offs] < (byte)0x80) {
+		if(buf[offs] <= 0x7f) {
 			length = buf[offs];
 		} else if(buf[offs] == (byte)0x81) {
 			length = buf[offs + 1];
