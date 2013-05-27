@@ -14,7 +14,7 @@ import javacard.framework.Util;
 
 public class YkneoOath extends Applet {
 	
-	private short _0 = 0;
+	private static final short _0 = 0;
 	
 	private byte[] tempBuf;
 
