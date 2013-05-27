@@ -23,19 +23,16 @@ public class OathObj {
 	
 	private byte[] key;
 	private byte[] name;
-	private byte[] type;
+	public byte type;
 	
 	private byte[] lastChal;
 	private byte props;
 	
 	public void setKey(byte[] buf, short offs, byte type, short len) {
-		if(type == HMAC_SHA1) {
-			type = HMAC_SHA1;
-		} else if(type == HMAC_SHA256) {
-			type = HMAC_SHA256;
-		} else {
+		if(type != HMAC_SHA1 && type != HMAC_SHA256) {
 			ISOException.throwIt(ISO7816.SW_DATA_INVALID);
 		}
+		this.type = type;
 		if(key == null || key.length != len) {
 			key = new byte[len];
 		}
