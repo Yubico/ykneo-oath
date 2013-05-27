@@ -17,6 +17,7 @@ my $key;
 GetOptions("reader=s" => \$readerMatch,
            "list" => \&set_action,
            "put" => \&set_action,
+           "delete" => \&set_action,
            "name=s" => \$name,
            "key=s" => \$key);
 
@@ -66,6 +67,14 @@ if($action eq 'put') {
   my @key_p = Chipcard::PCSC::ascii_to_array($key);
   my $len = scalar(@name_p) + 2 + scalar(@key_p) + 3;
   my @apdu = (0x00, 0x01, 0x00, 0x00, $len, 0x7a, scalar(@name_p), @name_p, 0x7b, 0x01, scalar(@key_p), @key_p);
+  my $repl = $card->Transmit(\@apdu);
+}
+
+if($action eq 'delete') {
+  die "No name specified." unless $name;
+  my @name_p = unpack("C*", $name);
+  my $len = scalar(@name_p) + 2;
+  my @apdu = (0x00, 0x02, 0x00, 0x00, $len, 0x7a, scalar(@name_p), @name_p);
   my $repl = $card->Transmit(\@apdu);
 }
 
