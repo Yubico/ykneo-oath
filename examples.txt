@@ -1,0 +1,11 @@
+# put:
+00 01 00 00 1c
+7a 04 6b 61 6b 61 # name kaka
+7b 01 14 0b 0b 0b 0b 0b 0b 0b 0b 0b 0b 0b 0b 0b 0b 0b 0b 0b 0b 0b 0b # key hmac-sha1 0b...
+7c 01 # prop 01 (ALWAYS_INCREASING)
+
+# delete:
+00 02 00 00 06 7a 04 6b 61 6b 61 # name kaka
+
+# list:
+00 a1 00 00
