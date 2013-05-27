@@ -9,6 +9,8 @@ import javacard.framework.APDU;
 import javacard.framework.Applet;
 import javacard.framework.ISO7816;
 import javacard.framework.ISOException;
+import javacard.framework.JCSystem;
+import javacard.framework.Util;
 
 public class YkneoOath extends Applet {
 
@@ -22,8 +24,19 @@ public class YkneoOath extends Applet {
 		}
 
 		byte[] buf = apdu.getBuffer();
+		short recvLen = apdu.setIncomingAndReceive();
+		
+		byte p1 = buf[ISO7816.OFFSET_P1];
+		byte p2 = buf[ISO7816.OFFSET_P2];
+		short p1p2 = Util.makeShort(p1, p2);
+		
 		switch (buf[ISO7816.OFFSET_INS]) {
 		case (byte)0x01: // put
+			if(p1p2 == 0x0000) {
+				handlePut(buf);
+			} else {
+				ISOException.throwIt(ISO7816.SW_WRONG_P1P2);
+			}
 			break;
 		case (byte)0x02: // delete
 			break;
@@ -36,4 +49,63 @@ public class YkneoOath extends Applet {
 		}
 	}
 
+	private void handlePut(byte[] buf) {
+		short offs = ISO7816.OFFSET_CDATA;
+		if(buf[offs++] != 0x7a) {
+			ISOException.throwIt(ISO7816.SW_WRONG_DATA);
+		}
+		short len = getLength(buf, offs++);
+		offs += getLengthBytes(len);
+		OathObj object = OathObj.findObject(buf, offs, len);
+		if(object == null) {
+			object = new OathObj();
+			object.setName(buf, offs, len);
+		} else {
+			object.removeObject();
+		}
+		offs += len;
+		
+		if(buf[offs++] != 0x7b) {
+			ISOException.throwIt(ISO7816.SW_WRONG_DATA);
+		}
+		byte keyType = buf[offs++];
+		if(keyType != OathObj.HMAC_SHA1 && keyType != OathObj.HMAC_SHA256) {
+			ISOException.throwIt(ISO7816.SW_WRONG_DATA);
+		}
+		len = getLength(buf, offs++);
+		offs += getLengthBytes(len);
+		object.setKey(buf, offs, keyType, len);
+		offs += len;
+		
+		if(buf[offs++] == 0x7c) {
+			object.setProp(buf[offs]);
+		}
+		
+		object.addObject();
+		JCSystem.requestObjectDeletion();
+	}
+	
+	private short getLength(byte[] buf, short offs) {
+		short length = 0;
+		if(buf[offs] < (byte)0x80) {
+			length = buf[offs];
+		} else if(buf[offs] == (byte)0x81) {
+			length = buf[offs + 1];
+		} else if(buf[offs] == (byte)0x82) {
+			length = Util.getShort(buf, (short) (offs + 1));
+		} else {
+			ISOException.throwIt(ISO7816.SW_DATA_INVALID);
+		}
+		return length;
+	}
+	
+	private short getLengthBytes(short len) {
+		if(len < (short)0x0080) {
+			return 1;
+		} else if(len <= (short)0x00ff) {
+			return 2;
+		} else {
+			return 3;
+		}
+	}
 }
