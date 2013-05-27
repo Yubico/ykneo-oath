@@ -14,6 +14,7 @@ my $action;
 my $name;
 my $key;
 my $challenge;
+my $type = 1;
 
 GetOptions("reader=s" => \$readerMatch,
            "list" => \&set_action,
@@ -22,7 +23,8 @@ GetOptions("reader=s" => \$readerMatch,
            "name=s" => \$name,
            "key=s" => \$key,
            "calculate" => \&set_action,
-           "challenge=s" => \$challenge);
+           "challenge=s" => \$challenge,
+           "type=i" => \$type);
 
 my $reader;
 
