@@ -89,6 +89,7 @@ public class OathObj {
 		OathObj object = firstObject;
 		while(object != null) {
 			if(len != object.name.length) {
+				object = object.nextObject;
 				continue;
 			}
 			if(Util.arrayCompare(name, offs, object.name, _0, len) == 0) {
