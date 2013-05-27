@@ -104,6 +104,7 @@ public class YkneoOath extends Applet {
 
 	private void handlePut(byte[] buf) {
 		short offs = ISO7816.OFFSET_CDATA;
+		byte dirty = 0;
 		if(buf[offs++] != 0x7a) {
 			ISOException.throwIt(ISO7816.SW_WRONG_DATA);
 		}
@@ -115,6 +116,7 @@ public class YkneoOath extends Applet {
 			object.setName(buf, offs, len);
 		} else {
 			object.removeObject();
+			dirty++;
 		}
 		offs += len;
 		
@@ -135,7 +137,9 @@ public class YkneoOath extends Applet {
 		}
 		
 		object.addObject();
-		JCSystem.requestObjectDeletion();
+		if(dirty > 0) {
+			JCSystem.requestObjectDeletion();
+		}
 	}
 	
 	private short getLength(byte[] buf, short offs) {
