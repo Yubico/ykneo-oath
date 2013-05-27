@@ -8,6 +8,9 @@ package pkgYkneoOath;
 import javacard.framework.ISO7816;
 import javacard.framework.ISOException;
 import javacard.framework.Util;
+import javacard.security.HMACKey;
+import javacard.security.KeyBuilder;
+import javacard.security.MessageDigest;
 
 public class OathObj {
 	public static final byte HMAC_SHA1 = 0x01;
@@ -15,28 +18,49 @@ public class OathObj {
 	
 	public static final byte PROP_ALWAYS_INCREASING = 1 << 0;
 	
-	private static short _0 = 0;
+	private static final short _0 = 0;
+	
+	private static final byte hmac_buf_size = 64;
 	
 	public static OathObj firstObject;
 	public static OathObj lastObject;
 	public OathObj nextObject;
 	
-	private byte[] key;
 	private byte[] name;
 	public byte type;
+
+	private byte[] inner;
+	private byte[] outer;
+	MessageDigest digest;
 	
 	private byte[] lastChal;
 	private byte props;
+	
+	public OathObj() {
+		inner = new byte[hmac_buf_size];
+		outer = new byte[hmac_buf_size];
+	}
 	
 	public void setKey(byte[] buf, short offs, byte type, short len) {
 		if(type != HMAC_SHA1 && type != HMAC_SHA256) {
 			ISOException.throwIt(ISO7816.SW_DATA_INVALID);
 		}
-		this.type = type;
-		if(key == null || key.length != len) {
-			key = new byte[len];
+		byte algorithm = 0;
+		if(type == HMAC_SHA1) {
+			algorithm = MessageDigest.ALG_SHA;
+		} else if(type == HMAC_SHA256) {
+			algorithm = MessageDigest.ALG_SHA_256;
 		}
-		Util.arrayCopy(buf, offs, key, _0, len);
+		if(type != this.type) {
+			this.type = type;
+			digest = MessageDigest.getInstance(algorithm, false);
+		}
+		Util.arrayFillNonAtomic(inner, _0, hmac_buf_size, (byte) 0x36);
+		Util.arrayFillNonAtomic(outer, _0, hmac_buf_size, (byte) 0x5c);
+        for (short i = 0; i < len; i++, offs++) {
+            inner[i] = (byte) (buf[offs] ^ 0x36);
+            outer[i] = (byte) (buf[offs] ^ 0x5c);
+        }
 	}
 	
 	public void setName(byte[] buf, short offs, short len) {
@@ -98,5 +122,27 @@ public class OathObj {
 			object = object.nextObject;
 		}
 		return object;
+	}
+
+	public short calculate(byte[] chal, short chalOffs, short len, byte[] dest,
+			short destOffs) {
+		short keyLen = 0;
+		if(digest.getAlgorithm() == MessageDigest.ALG_SHA) {
+			keyLen = MessageDigest.LENGTH_SHA;
+		} else if(digest.getAlgorithm() == MessageDigest.ALG_SHA_256) {
+			keyLen = MessageDigest.LENGTH_SHA_256;
+		}
+		
+		if(len > hmac_buf_size || len == 0) {
+			ISOException.throwIt(ISO7816.SW_WRONG_DATA);
+		}
+		
+		digest.reset();
+		digest.update(inner, _0, hmac_buf_size);
+		digest.doFinal(chal, chalOffs, len, dest, destOffs);
+		
+		digest.reset();
+		digest.update(outer, _0, hmac_buf_size);
+		return digest.doFinal(dest, destOffs, keyLen, dest, destOffs);
 	}
 }
