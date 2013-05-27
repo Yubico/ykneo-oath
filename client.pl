@@ -69,9 +69,9 @@ if($action eq 'put') {
   die "No key specified." unless $key;
 
   my @name_p = unpack("C*", $name);
-  my @key_p = Chipcard::PCSC::ascii_to_array($key);
-  my $len = scalar(@name_p) + 2 + scalar(@key_p) + 3;
-  my @apdu = (0x00, 0x01, 0x00, 0x00, $len, 0x7a, scalar(@name_p), @name_p, 0x7b, 0x01, scalar(@key_p), @key_p);
+  my $key_p = Chipcard::PCSC::ascii_to_array($key);
+  my $len = scalar(@name_p) + 2 + scalar(@$key_p) + 3;
+  my @apdu = (0x00, 0x01, 0x00, 0x00, $len, 0x7a, scalar(@name_p), @name_p, 0x7b, $type, scalar(@$key_p), @$key_p);
   my $repl = $card->Transmit(\@apdu);
 }
 
@@ -89,9 +89,12 @@ if($action eq 'calculate') {
 
   my @name_p = unpack("C*", $name);
   warn $challenge;
-  my @chal_p = Chipcard::PCSC::ascii_to_array($challenge);
-  my $len = scalar(@name_p) + 2 + scalar(@chal_p) + 2;
-  my @apdu = (0x00, 0xa2, 0x00, 0x00, $len, 0x7a, scalar(@name_p), @name_p, 0x7d, scalar(@chal_p), @chal_p);
+  my $chal_p = Chipcard::PCSC::ascii_to_array($challenge);
+  my $len = scalar(@name_p) + 2 + scalar(@$chal_p) + 2;
+  my @apdu = (0x00, 0xa2, 0x00, 0x00, $len, 0x7a, scalar(@name_p), @name_p, 0x7d, scalar(@$chal_p), @$chal_p);
+  foreach my $tmp (@apdu) {
+    printf("%02x ", $tmp);
+  } print "\n";
   my $RecvData = $card->Transmit(\@apdu);
 
  print "  Recv = ";
