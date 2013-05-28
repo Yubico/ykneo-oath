@@ -29,7 +29,8 @@ public class OathObj {
 
 	private byte[] inner;
 	private byte[] outer;
-	MessageDigest digest;
+	private static MessageDigest sha;
+	private static MessageDigest sha256;
 	
 	private byte[] lastChal;
 	private byte props;
@@ -43,16 +44,13 @@ public class OathObj {
 		if(type != HMAC_SHA1 && type != HMAC_SHA256) {
 			ISOException.throwIt(ISO7816.SW_DATA_INVALID);
 		}
-		byte algorithm = 0;
-		if(type == HMAC_SHA1) {
-			algorithm = MessageDigest.ALG_SHA;
-		} else if(type == HMAC_SHA256) {
-			algorithm = MessageDigest.ALG_SHA_256;
+		if(type == HMAC_SHA1 && sha == null) {
+			sha = MessageDigest.getInstance(MessageDigest.ALG_SHA, false);
+		} else if(type == HMAC_SHA256 && sha256 == null) {
+			sha256 = MessageDigest.getInstance(MessageDigest.ALG_SHA_256, false);
 		}
-		if(type != this.type) {
-			this.type = type;
-			digest = MessageDigest.getInstance(algorithm, false);
-		}
+		
+		this.type = type;
 		Util.arrayFillNonAtomic(inner, _0, hmac_buf_size, (byte) 0x36);
 		Util.arrayFillNonAtomic(outer, _0, hmac_buf_size, (byte) 0x5c);
         for (short i = 0; i < len; i++, offs++) {
@@ -124,11 +122,11 @@ public class OathObj {
 
 	public short calculate(byte[] chal, short chalOffs, short len, byte[] dest,
 			short destOffs) {
-		short keyLen = 0;
-		if(digest.getAlgorithm() == MessageDigest.ALG_SHA) {
-			keyLen = MessageDigest.LENGTH_SHA;
-		} else if(digest.getAlgorithm() == MessageDigest.ALG_SHA_256) {
-			keyLen = MessageDigest.LENGTH_SHA_256;
+		MessageDigest digest = null;
+		if(type == HMAC_SHA1) {
+			digest = sha;
+		} else if(type == HMAC_SHA256) {
+			digest = sha256;
 		}
 		
 		if(len > hmac_buf_size || len == 0) {
@@ -137,10 +135,10 @@ public class OathObj {
 		
 		digest.reset();
 		digest.update(inner, _0, hmac_buf_size);
-		digest.doFinal(chal, chalOffs, len, dest, destOffs);
+		short digestLen = digest.doFinal(chal, chalOffs, len, dest, destOffs);
 		
 		digest.reset();
 		digest.update(outer, _0, hmac_buf_size);
-		return digest.doFinal(dest, destOffs, keyLen, dest, destOffs);
+		return digest.doFinal(dest, destOffs, digestLen, dest, destOffs);
 	}
 }
