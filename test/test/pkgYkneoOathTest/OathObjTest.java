@@ -9,6 +9,8 @@ import static org.junit.Assert.*;
 
 import java.util.Arrays;
 
+import javacard.framework.ISOException;
+
 import org.junit.Test;
 
 import pkgYkneoOath.OathObj;
@@ -59,6 +61,25 @@ public class OathObjTest {
 		second.removeObject();
 		assertEquals(null, OathObj.firstObject);
 		assertEquals(null, OathObj.lastObject);
+	}
+	
+	@Test
+	public void TestIncreasing() {
+		OathObj obj = new OathObj();
+		obj.setKey("Test".getBytes(), (short)0, OathObj.HMAC_SHA1, (short)4);
+		obj.setProp(OathObj.PROP_ALWAYS_INCREASING);
+		byte[] resp = new byte[20];
+		
+		short ret = obj.calculate(new byte[] {0x00, 0x00,  0x00,  0x01}, (short)0, (short)4, resp, (short)0);
+		assertEquals(ret, 20);
+		ret = obj.calculate(new byte[] {0x00, 0x00,  0x00,  0x02}, (short)0, (short)4, resp, (short)0);
+		assertEquals(ret, 20);
+		try {
+			obj.calculate(new byte[] {0x00, 0x00,  0x00,  0x01}, (short)0, (short)4, resp, (short)0);
+			throw new ISOException("shouldn't happen");
+		} catch(ISOException e) {
+			assertEquals(e.getMessage(), "6982");
+		}
 	}
 	
 	/* sha-1 test vectors come from rfc 2202 */
