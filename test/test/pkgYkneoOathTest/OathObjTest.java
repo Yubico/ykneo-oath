@@ -56,6 +56,7 @@ public class OathObjTest {
 		assertEquals(null, OathObj.lastObject);
 	}
 	
+	/* sha-1 test vectors come from rfc 2202 */
 	@Test
 	public void TestSha1Case1() {
 		OathObj obj = new OathObj();
@@ -114,6 +115,20 @@ public class OathObjTest {
 		byte[] res = new byte[20];
 		obj.calculate("Test With Truncation".getBytes(), (short)0, (short)20, res, (short)0);
 		byte[] expected = new byte[] {0x4c, 0x1a, 0x03, 0x42, 0x4b, 0x55, (byte) 0xe0, 0x7f, (byte) 0xe7, (byte) 0xf2, 0x7b, (byte) 0xe1, (byte) 0xd5, (byte) 0x8b, (byte) 0xb9, 0x32, 0x4a, (byte) 0x9a, 0x5a, 0x04};
+		assertArrayEquals(expected, res);
+	}
+	
+	/* sha-256 test vectors come from rfc 4231 */
+	@Test
+	public void TestSha256Case1() {
+		OathObj obj = new OathObj();
+		byte[] key = new byte[20];
+		Arrays.fill(key, (byte)0x0b);
+		obj.setKey(key, (short)0, OathObj.HMAC_SHA256, (short)20);
+		byte[] res = new byte[32];
+		obj.calculate("Hi There".getBytes(), (short)0, (short)8, res, (short)0);
+		byte[] expected = new byte[] {(byte) 0xb0, 0x34, 0x4c, 0x61, (byte) 0xd8, (byte) 0xdb, 0x38, 0x53, 0x5c, (byte) 0xa8, (byte) 0xaf, (byte) 0xce, (byte) 0xaf, 0x0b, (byte) 0xf1, 0x2b,
+				(byte) 0x88, 0x1d, (byte) 0xc2, 0x00, (byte) 0xc9, (byte) 0x83, 0x3d, (byte) 0xa7, 0x26, (byte) 0xe9, 0x37, 0x6c, 0x2e, 0x32, (byte) 0xcf, (byte) 0xf7};
 		assertArrayEquals(expected, res);
 	}
 }
