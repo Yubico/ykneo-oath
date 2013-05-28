@@ -136,6 +136,23 @@ public class OathObj {
 			ISOException.throwIt(ISO7816.SW_WRONG_DATA);
 		}
 		
+		if((props & PROP_ALWAYS_INCREASING) == PROP_ALWAYS_INCREASING) {
+			if(lastChal == null) {
+				lastChal = new byte[hmac_buf_size];
+			}
+			for(short i = 0; i < len; i++) {
+				short offs = (short) (i + chalOffs);
+				if(chal[offs] > lastChal[i]) {
+					break;
+				} else if(lastChal[i] == 0 || lastChal[i] == chal[offs]) {
+					continue;
+				} else {
+					ISOException.throwIt(ISO7816.SW_SECURITY_STATUS_NOT_SATISFIED);
+				}
+			}
+			Util.arrayCopy(chal, chalOffs, lastChal, _0, len);
+		}
+		
 		digest.reset();
 		digest.update(inner, _0, hmac_buf_size);
 		short digestLen = digest.doFinal(chal, chalOffs, len, dest, destOffs);
