@@ -69,7 +69,7 @@ if($action eq 'put') {
   die "No key specified." unless $key;
 
   my @name_p = unpack("C*", $name);
-  my $key_p = Chipcard::PCSC::ascii_to_array($key);
+  my $key_p = unpack_hex($key);
   my $len = scalar(@name_p) + 2 + scalar(@$key_p) + 3;
   my @apdu = (0x00, 0x01, 0x00, 0x00, $len, 0x7a, scalar(@name_p), @name_p, 0x7b, $type, scalar(@$key_p), @$key_p);
   print "  Send = ";
@@ -77,7 +77,6 @@ if($action eq 'put') {
     printf ("%02x ", $tmp);
   } print "\n";
   my $repl = $card->Transmit(\@apdu);
-  warn @$repl;
 }
 
 if($action eq 'delete') {
@@ -93,7 +92,7 @@ if($action eq 'calculate') {
   die "No challenge specified." unless $challenge;
 
   my @name_p = unpack("C*", $name);
-  my $chal_p = Chipcard::PCSC::ascii_to_array($challenge);
+  my $chal_p = unpack_hex($challenge);
   my $len = scalar(@name_p) + 2 + scalar(@$chal_p) + 2;
   my @apdu = (0x00, 0xa2, 0x00, 0x00, $len, 0x7a, scalar(@name_p), @name_p, 0x7d, scalar(@$chal_p), @$chal_p);
   print "  Send = ";
@@ -133,4 +132,16 @@ sub get_len_bytes {
 sub set_action {
   my ($opt_name, $opt_value) = @_;
   $action = $opt_name;
+}
+
+sub unpack_hex {
+  my $input = shift;
+  my $hex;
+  if($input =~ m/^([0-9a-fA-F]{2}\s?)+$/) {
+    $hex = Chipcard::PCSC::ascii_to_array($input);
+  } else {
+    my @hex_tmp = unpack("C*", $input);
+    $hex = \@hex_tmp;
+  }
+  return $hex;
 }
