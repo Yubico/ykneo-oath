@@ -44,6 +44,9 @@ public class OathObj {
 		if(type != HMAC_SHA1 && type != HMAC_SHA256) {
 			ISOException.throwIt(ISO7816.SW_DATA_INVALID);
 		}
+		if(len > hmac_buf_size) {
+			ISOException.throwIt(ISO7816.SW_WRONG_DATA);
+		}
 		if(type == HMAC_SHA1 && sha == null) {
 			sha = MessageDigest.getInstance(MessageDigest.ALG_SHA, false);
 		} else if(type == HMAC_SHA256 && sha256 == null) {
