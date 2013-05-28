@@ -104,4 +104,16 @@ public class OathObjTest {
 		byte[] expected = new byte[] {0x4c, (byte) 0x90, 0x07, (byte) 0xf4, 0x02, 0x62, 0x50, (byte) 0xc6, (byte) 0xbc, (byte) 0x84, 0x14, (byte) 0xf9, (byte) 0xbf, 0x50, (byte) 0xc8, 0x6c, 0x2d, 0x72, 0x35, (byte) 0xda};
 		assertArrayEquals(expected, res);
 	}
+	
+	@Test
+	public void TestSha1Case5() {
+		OathObj obj = new OathObj();
+		byte[] key = new byte[20];
+		Arrays.fill(key, (byte)0x0c);
+		obj.setKey(key, (short)0, OathObj.HMAC_SHA1, (short)20);
+		byte[] res = new byte[20];
+		obj.calculate("Test With Truncation".getBytes(), (short)0, (short)20, res, (short)0);
+		byte[] expected = new byte[] {0x4c, 0x1a, 0x03, 0x42, 0x4b, 0x55, (byte) 0xe0, 0x7f, (byte) 0xe7, (byte) 0xf2, 0x7b, (byte) 0xe1, (byte) 0xd5, (byte) 0x8b, (byte) 0xb9, 0x32, 0x4a, (byte) 0x9a, 0x5a, 0x04};
+		assertArrayEquals(expected, res);
+	}
 }
