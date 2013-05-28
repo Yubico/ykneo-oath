@@ -1,5 +1,10 @@
 package pkgYkneoOathTest;
 
+/*
+ * Copyright (c) 2013 Yubico AB
+ * All rights reserved.
+ */
+
 import static org.junit.Assert.*;
 
 import java.util.Arrays;

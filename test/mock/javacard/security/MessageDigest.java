@@ -1,5 +1,10 @@
 package javacard.security;
 
+/*
+ * Copyright (c) 2013 Yubico AB
+ * All rights reserved.
+ */
+
 import java.security.DigestException;
 import java.security.NoSuchAlgorithmException;
 

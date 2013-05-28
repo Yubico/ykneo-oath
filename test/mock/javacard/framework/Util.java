@@ -1,5 +1,10 @@
 package javacard.framework;
 
+/*
+ * Copyright (c) 2013 Yubico AB
+ * All rights reserved.
+ */
+
 import java.util.Arrays;
 
 public class Util {
