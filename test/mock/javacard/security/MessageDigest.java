@@ -5,15 +5,25 @@ import java.security.NoSuchAlgorithmException;
 
 public class MessageDigest {
 	
-	private java.security.MessageDigest sha1;
+	private java.security.MessageDigest digest;
+	
+    public static final byte ALG_SHA = 1;
+    public static final byte ALG_SHA_256 = 4;
+
 	
     public static final MessageDigest getInstance(byte algorithm, boolean externalAccess) {
-    	return new MessageDigest();
+    	return new MessageDigest(algorithm);
     }
     
-    public MessageDigest() {
+    public MessageDigest(byte algorithm) {
     	try {
-			sha1 = java.security.MessageDigest.getInstance("SHA-1");
+    		if(algorithm == ALG_SHA) {
+    			digest = java.security.MessageDigest.getInstance("SHA-1");
+    		} else if(algorithm == ALG_SHA_256) {
+    			digest = java.security.MessageDigest.getInstance("SHA-256");
+    		} else {
+    			throw new NoSuchAlgorithmException("only support for sha-1 and sha-256.");
+    		}
 		} catch (NoSuchAlgorithmException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -22,17 +32,17 @@ public class MessageDigest {
 
 
 	public void reset() {
-    	sha1.reset();
+    	digest.reset();
     }
     
     public void update(byte[] inBuff, short inOffset, short inLength) {
-    	sha1.update(inBuff, inOffset, inLength);
+    	digest.update(inBuff, inOffset, inLength);
     }
     
     public short doFinal(byte[] inBuff, short inOffset, short inLength, byte[] outBuff, short outOffset) {
-    	sha1.update(inBuff, inOffset, inLength);
+    	digest.update(inBuff, inOffset, inLength);
     	try {
-			return (short) sha1.digest(outBuff, outOffset, 20);
+			return (short) digest.digest(outBuff, outOffset, digest.getDigestLength());
 		} catch (DigestException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
