@@ -8,8 +8,6 @@ package pkgYkneoOath;
 import javacard.framework.ISO7816;
 import javacard.framework.ISOException;
 import javacard.framework.Util;
-import javacard.security.HMACKey;
-import javacard.security.KeyBuilder;
 import javacard.security.MessageDigest;
 
 public class OathObj {
