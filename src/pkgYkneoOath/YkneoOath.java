@@ -162,7 +162,7 @@ public class YkneoOath extends Applet {
 		if(keyType != OathObj.HMAC_SHA1 && keyType != OathObj.HMAC_SHA256) {
 			ISOException.throwIt(ISO7816.SW_WRONG_DATA);
 		}
-		len = getLength(buf, offs++);
+		len = getLength(buf, offs);
 		offs += getLengthBytes(len);
 		object.setKey(buf, offs, keyType, len);
 		offs += len;
