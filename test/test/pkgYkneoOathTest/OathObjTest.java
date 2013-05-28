@@ -17,6 +17,35 @@ public class OathObjTest {
 	}
 	
 	@Test
+	public void TestAddSeveralAndRemove() {
+		OathObj first = new OathObj();
+		OathObj second = new OathObj();
+		OathObj third = new OathObj();
+		first.addObject();
+		second.addObject();
+		third.addObject();
+		assertEquals(first, OathObj.firstObject);
+		assertEquals(second, first.nextObject);
+		assertEquals(third, second.nextObject);
+		assertEquals(third, OathObj.lastObject);
+		first.removeObject();
+		assertEquals(null, first.nextObject);
+		assertEquals(second, OathObj.firstObject);
+		second.removeObject();
+		assertEquals(null, second.nextObject);
+		assertEquals(third, OathObj.firstObject);
+		second.addObject();
+		assertEquals(second, third.nextObject);
+		assertEquals(second, OathObj.lastObject);
+		third.removeObject();
+		assertEquals(null, third.nextObject);
+		assertEquals(second, OathObj.firstObject);
+		second.removeObject();
+		assertEquals(null, OathObj.firstObject);
+		assertEquals(null, OathObj.lastObject);
+	}
+	
+	@Test
 	public void TestSha1Case1() {
 		OathObj obj = new OathObj();
 		obj.setKey(new byte[] {0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b},
