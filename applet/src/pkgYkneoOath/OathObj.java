@@ -140,6 +140,8 @@ public class OathObj {
 			if(lastChal == null) {
 				lastChal = new byte[hmac_buf_size];
 			}
+			// XXX: this will only work properly if the lengths are constant,
+			//  we could try to right-adjust the arrays to make a 16 byte array "larger" than an 8 byte array..
 			for(short i = 0; i < len; i++) {
 				short offs = (short) (i + chalOffs);
 				if(chal[offs] > lastChal[i]) {
@@ -150,6 +152,7 @@ public class OathObj {
 					ISOException.throwIt(ISO7816.SW_SECURITY_STATUS_NOT_SATISFIED);
 				}
 			}
+			Util.arrayFillNonAtomic(lastChal, _0, hmac_buf_size, (byte) 0);
 			Util.arrayCopy(chal, chalOffs, lastChal, _0, len);
 		}
 		
