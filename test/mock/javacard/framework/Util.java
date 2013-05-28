@@ -15,6 +15,12 @@ public class Util {
 		return (short) (destOff + length);
 	}
 	
+	public static short arrayCopy(byte[] src, short srcOff, byte[] dest, short destOff, short length)
+			throws ArrayIndexOutOfBoundsException, NullPointerException {
+		System.arraycopy(src, srcOff, dest, destOff, length);
+		return (short) (destOff + length);
+	}
+	
     public static short makeShort(byte b1, byte b2) {
         return (short) ((b1 << 8) + (b2 & 0xFF));
     }

@@ -23,6 +23,9 @@ public class OathObjTest {
 		OathObj first = new OathObj();
 		OathObj second = new OathObj();
 		OathObj third = new OathObj();
+		first.setName("first".getBytes(), (short)0, (short)5);
+		second.setName("second".getBytes(), (short)0, (short)6);
+		third.setName("third".getBytes(), (short)0, (short)5);
 		first.addObject();
 		second.addObject();
 		third.addObject();
@@ -30,6 +33,12 @@ public class OathObjTest {
 		assertEquals(second, first.nextObject);
 		assertEquals(third, second.nextObject);
 		assertEquals(third, OathObj.lastObject);
+		OathObj obj = OathObj.findObject("first".getBytes(), (short)0, (short)5);
+		assertEquals(first, obj);
+		obj = OathObj.findObject("second".getBytes(), (short)0, (short)6);
+		assertEquals(second, obj);
+		obj = OathObj.findObject("third".getBytes(), (short)0, (short)5);
+		assertEquals(third, obj);
 		first.removeObject();
 		assertEquals(null, first.nextObject);
 		assertEquals(second, OathObj.firstObject);
