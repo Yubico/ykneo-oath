@@ -72,7 +72,12 @@ if($action eq 'put') {
   my $key_p = Chipcard::PCSC::ascii_to_array($key);
   my $len = scalar(@name_p) + 2 + scalar(@$key_p) + 3;
   my @apdu = (0x00, 0x01, 0x00, 0x00, $len, 0x7a, scalar(@name_p), @name_p, 0x7b, $type, scalar(@$key_p), @$key_p);
+  print "  Send = ";
+  foreach my $tmp (@apdu) {
+    printf ("%02x ", $tmp);
+  } print "\n";
   my $repl = $card->Transmit(\@apdu);
+  warn @$repl;
 }
 
 if($action eq 'delete') {
@@ -91,6 +96,10 @@ if($action eq 'calculate') {
   my $chal_p = Chipcard::PCSC::ascii_to_array($challenge);
   my $len = scalar(@name_p) + 2 + scalar(@$chal_p) + 2;
   my @apdu = (0x00, 0xa2, 0x00, 0x00, $len, 0x7a, scalar(@name_p), @name_p, 0x7d, scalar(@$chal_p), @$chal_p);
+  print "  Send = ";
+  foreach my $tmp (@apdu) {
+    printf ("%02x ", $tmp);
+  } print "\n";
   my $repl = $card->Transmit(\@apdu);
 
   print "  Recv = ";
