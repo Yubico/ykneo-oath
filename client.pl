@@ -15,6 +15,7 @@ my $name;
 my $key;
 my $challenge;
 my $type = 1;
+my $code;
 
 GetOptions("reader=s" => \$readerMatch,
            "list" => \&set_action,
@@ -24,7 +25,9 @@ GetOptions("reader=s" => \$readerMatch,
            "key=s" => \$key,
            "calculate" => \&set_action,
            "challenge=s" => \$challenge,
-           "type=i" => \$type);
+           "type=i" => \$type,
+           "code=s" => \$code,
+           "change-code" => \&set_action);
 
 my $reader;
 
@@ -44,6 +47,35 @@ die "Card connection failed." unless $card;
 
 # select applet
 $card->TransmitWithCheck("00 a4 04 00 07 a0 00 00 05 27 21 01", "90 00");
+
+if(defined($code)) {
+  my $code_p = unpack_hex($code);
+  my $len = scalar(@$code_p) + 2;
+  my @apdu = (0x00, 0xa3, 0x00, 0x00, $len, 0x7e, scalar(@$code_p), @$code_p);
+  my $repl = $card->Transmit(\@apdu);
+  if($repl->[0] != 0x90) {
+    die "wrong code, " . $repl->[1] . " attempts left.";
+  }
+}
+
+if($action eq 'change-code') {
+  die "No key specified." unless $key;
+  my $key_p = unpack_hex($key);
+  my $len = scalar(@$key_p) + 2;
+  my @apdu = (0x00, 0x03, 0x00, 0x00, $len, 0x7e, scalar(@$key_p), @$key_p);
+  print "  Send = ";
+  foreach my $tmp (@apdu) {
+    printf ("%02x ", $tmp);
+  } print "\n";
+  my $repl = $card->Transmit(\@apdu);
+  print "  Recv = ";
+  foreach my $tmpVal (@{$repl}) {
+    printf ("%02X ", $tmpVal);
+  } print "\n";
+  if($repl->[0] != 0x90) {
+    die "failed setting code.";
+  }
+}
 
 if($action eq 'list') {
   my $repl = $card->Transmit([0x00, 0xa1, 0x00, 0x00]);
