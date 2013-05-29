@@ -16,6 +16,7 @@ my $key;
 my $challenge;
 my $type = 1;
 my $code;
+my $debug;
 
 GetOptions("reader=s" => \$readerMatch,
            "list" => \&set_action,
@@ -27,7 +28,8 @@ GetOptions("reader=s" => \$readerMatch,
            "challenge=s" => \$challenge,
            "type=i" => \$type,
            "code=s" => \$code,
-           "change-code" => \&set_action);
+           "change-code" => \&set_action,
+           "debug" => \$debug);
 
 my $reader;
 
@@ -52,7 +54,7 @@ if(defined($code)) {
   my $code_p = unpack_hex($code);
   my $len = scalar(@$code_p) + 2;
   my @apdu = (0x00, 0xa3, 0x00, 0x00, $len, 0x7e, scalar(@$code_p), @$code_p);
-  my $repl = $card->Transmit(\@apdu);
+  my $repl = send_apdu(\@apdu);
   if($repl->[0] != 0x90) {
     die "wrong code, " . $repl->[1] . " attempts left.";
   }
@@ -63,22 +65,14 @@ if($action eq 'change-code') {
   my $key_p = unpack_hex($key);
   my $len = scalar(@$key_p) + 2;
   my @apdu = (0x00, 0x03, 0x00, 0x00, $len, 0x7e, scalar(@$key_p), @$key_p);
-  print "  Send = ";
-  foreach my $tmp (@apdu) {
-    printf ("%02x ", $tmp);
-  } print "\n";
-  my $repl = $card->Transmit(\@apdu);
-  print "  Recv = ";
-  foreach my $tmpVal (@{$repl}) {
-    printf ("%02X ", $tmpVal);
-  } print "\n";
+  my $repl = send_apdu(\@apdu);
   if($repl->[0] != 0x90) {
     die "failed setting code.";
   }
 }
 
 if($action eq 'list') {
-  my $repl = $card->Transmit([0x00, 0xa1, 0x00, 0x00]);
+  my $repl = send_apdu([0x00, 0xa1, 0x00, 0x00]);
   if($repl->[0] != 0xa1) {
     die "unknown reply: " . $repl->[0];
   }
@@ -104,11 +98,7 @@ if($action eq 'put') {
   my $key_p = unpack_hex($key);
   my $len = scalar(@name_p) + 2 + scalar(@$key_p) + 3;
   my @apdu = (0x00, 0x01, 0x00, 0x00, $len, 0x7a, scalar(@name_p), @name_p, 0x7b, $type, scalar(@$key_p), @$key_p);
-  print "  Send = ";
-  foreach my $tmp (@apdu) {
-    printf ("%02x ", $tmp);
-  } print "\n";
-  my $repl = $card->Transmit(\@apdu);
+  my $repl = send_apdu(\@apdu);
 }
 
 if($action eq 'delete') {
@@ -116,7 +106,7 @@ if($action eq 'delete') {
   my @name_p = unpack("C*", $name);
   my $len = scalar(@name_p) + 2;
   my @apdu = (0x00, 0x02, 0x00, 0x00, $len, 0x7a, scalar(@name_p), @name_p);
-  my $repl = $card->Transmit(\@apdu);
+  my $repl = send_apdu(\@apdu);
 }
 
 if($action eq 'calculate') {
@@ -127,16 +117,7 @@ if($action eq 'calculate') {
   my $chal_p = unpack_hex($challenge);
   my $len = scalar(@name_p) + 2 + scalar(@$chal_p) + 2;
   my @apdu = (0x00, 0xa2, 0x00, 0x00, $len, 0x7a, scalar(@name_p), @name_p, 0x7d, scalar(@$chal_p), @$chal_p);
-  print "  Send = ";
-  foreach my $tmp (@apdu) {
-    printf ("%02x ", $tmp);
-  } print "\n";
-  my $repl = $card->Transmit(\@apdu);
-
-  print "  Recv = ";
-  foreach my $tmpVal (@{$repl}) {
-    printf ("%02X ", $tmpVal);
-  } print "\n";
+  my $repl = send_apdu(\@apdu);
 }
 
 sub get_len {
@@ -176,4 +157,22 @@ sub unpack_hex {
     $hex = \@hex_tmp;
   }
   return $hex;
+}
+
+sub send_apdu {
+  my $apdu = shift;
+  if($debug) {
+    print "  Send = ";
+    foreach my $tmp (@$apdu) {
+      printf ("%02x ", $tmp);
+    } print "\n";
+  }
+  my $repl = $card->Transmit($apdu);
+  if($debug) {
+    print "  Recv = ";
+    foreach my $tmpVal (@{$repl}) {
+      printf ("%02X ", $tmpVal);
+    } print "\n";
+  }
+  return $repl;
 }
