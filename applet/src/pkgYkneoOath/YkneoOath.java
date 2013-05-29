@@ -32,7 +32,7 @@ public class YkneoOath extends Applet {
 		}
 
 		byte[] buf = apdu.getBuffer();
-		short recvLen = apdu.setIncomingAndReceive();
+		apdu.setIncomingAndReceive();
 		short sendLen = 0;
 		
 		byte p1 = buf[ISO7816.OFFSET_P1];
