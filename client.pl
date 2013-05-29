@@ -17,6 +17,7 @@ my $challenge;
 my $type = 1;
 my $code;
 my $debug;
+my $digits = 6;
 
 GetOptions("reader=s" => \$readerMatch,
            "list" => \&set_action,
@@ -29,7 +30,8 @@ GetOptions("reader=s" => \$readerMatch,
            "type=i" => \$type,
            "code=s" => \$code,
            "change-code" => \&set_action,
-           "debug" => \$debug);
+           "debug" => \$debug,
+           "digits=i" => \$digits);
 
 my $reader;
 
@@ -120,6 +122,15 @@ if($action eq 'calculate') {
   my $len = scalar(@name_p) + 2 + scalar(@$chal_p) + 2;
   my @apdu = (0x00, 0xa2, 0x00, 0x00, $len, 0x7a, scalar(@name_p), @name_p, 0x7d, scalar(@$chal_p), @$chal_p);
   my $repl = send_apdu(\@apdu);
+
+  die "error on calc" unless $repl->[0] == 0x7d;
+  my $offs = $repl->[scalar(@$repl) - 3] & 0xf;
+  $offs += 2; # status and length..
+  my $code = (($repl->[$offs++] & 0x7f) << 24) |
+    (($repl->[$offs++] & 0xff) << 16) |
+    (($repl->[$offs++] & 0xff) << 8) |
+    ($repl->[$offs++] & 0xff);
+  printf("code is %0${digits}d\n", $code % (10 ** $digits));
 }
 
 sub get_len {
