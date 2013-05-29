@@ -152,7 +152,7 @@ sub set_action {
 sub unpack_hex {
   my $input = shift;
   my $hex;
-  if($input =~ m/^([0-9a-fA-F]{2}\s?)+$/) {
+  if($input =~ m/^([0-9a-fA-F]{2}\s)+$/) {
     $hex = Chipcard::PCSC::ascii_to_array($input);
   } else {
     my @hex_tmp = unpack("C*", $input);
