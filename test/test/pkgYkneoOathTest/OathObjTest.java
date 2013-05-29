@@ -82,6 +82,21 @@ public class OathObjTest {
 		}
 	}
 	
+	@Test
+	public void TestIncreasingDiffLen() {
+		OathObj obj = new OathObj();
+		obj.setKey("Kaka".getBytes(), (short)0, OathObj.HMAC_SHA1, (short)4);
+		obj.setProp(OathObj.PROP_ALWAYS_INCREASING);
+		byte[] resp = new byte[20];
+		
+		short ret = obj.calculate(new byte[] {0x00, 0x01, 0x02, 0x03}, (short)0, (short)4, resp, (short)0);
+		assertEquals(ret, 20);
+		ret = obj.calculate(new byte[] {0x00, 0x00, 0x01, 0x02, 0x04}, (short)0, (short)5, resp, (short)0);
+		assertEquals(ret, 20);
+		ret = obj.calculate(new byte[] {0x01, 0x02, 0x05}, (short)0, (short)3, resp, (short)0);
+		assertEquals(ret, 20);
+	}
+	
 	/* sha-1 test vectors come from rfc 2202 */
 	@Test
 	public void TestSha1Case1() {
