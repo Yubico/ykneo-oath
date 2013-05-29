@@ -44,6 +44,10 @@ public class YkneoOath extends Applet {
 		byte ins = buf[ISO7816.OFFSET_INS];
 		
 		if(lockCode != null && ins != 0xa3) {
+			// if the lockCode is blocked we allow reset by ins ff
+			if(lockCode.getTriesRemaining() == 0 && ins == (byte)0xff) {
+				handleReset();
+			}
 			if(!lockCode.isValidated()) {
 				ISOException.throwIt(ISO7816.SW_SECURITY_STATUS_NOT_SATISFIED);
 			}
@@ -97,6 +101,13 @@ public class YkneoOath extends Applet {
 		if(sendLen > 0) {
 			apdu.setOutgoingAndSend(_0 , sendLen);
 		}
+	}
+
+	private void handleReset() {
+		lockCode = null;
+		OathObj.firstObject = null;
+		OathObj.lastObject = null;
+		JCSystem.requestObjectDeletion();
 	}
 
 	private void handleValidate(byte[] buf) {
