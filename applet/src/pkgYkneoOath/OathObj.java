@@ -143,7 +143,7 @@ public class OathObj {
 			}
 			short j = 0;
 			short thisOffs = (short) (hmac_buf_size - len);
-			for(short i = lastOffs; i < hmac_buf_size; i++) {
+			for(short i = lastOffs < thisOffs ? lastOffs : thisOffs; i < hmac_buf_size; i++) {
 				if(i < thisOffs) {
 					if(lastChal[i] == 0) {
 						continue;
