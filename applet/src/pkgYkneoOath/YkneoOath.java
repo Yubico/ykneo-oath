@@ -43,10 +43,11 @@ public class YkneoOath extends Applet {
 		short p1p2 = Util.makeShort(p1, p2);
 		byte ins = buf[ISO7816.OFFSET_INS];
 		
-		if(lockCode != null && ins != 0xa3) {
+		if(lockCode != null && ins != (byte)0xa3) {
 			// if the lockCode is blocked we allow reset by ins ff
 			if(lockCode.getTriesRemaining() == 0 && ins == (byte)0xff) {
 				handleReset();
+				return;
 			}
 			if(!lockCode.isValidated()) {
 				ISOException.throwIt(ISO7816.SW_SECURITY_STATUS_NOT_SATISFIED);
@@ -74,6 +75,7 @@ public class YkneoOath extends Applet {
 			} else {
 				ISOException.throwIt(ISO7816.SW_WRONG_P1P2);
 			}
+			break;
 		case (byte)0xa1: // list
 			if(p1p2 == 0x0000) {
 				sendLen = handleList(buf);
@@ -94,6 +96,7 @@ public class YkneoOath extends Applet {
 			} else {
 				ISOException.throwIt(ISO7816.SW_WRONG_P1P2);
 			}
+			break;
 		default:
 			ISOException.throwIt(ISO7816.SW_INS_NOT_SUPPORTED);
 		}
