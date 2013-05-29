@@ -9,3 +9,9 @@
 
 # list:
 00 a1 00 00
+
+# change code:
+00 03 00 00 06 7e 04 6b 61 6b 61
+
+# validate code:
+00 a3 00 00 06 7e 04 6b 61 6b 61

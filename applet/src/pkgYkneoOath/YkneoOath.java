@@ -10,6 +10,7 @@ import javacard.framework.Applet;
 import javacard.framework.ISO7816;
 import javacard.framework.ISOException;
 import javacard.framework.JCSystem;
+import javacard.framework.OwnerPIN;
 import javacard.framework.Util;
 
 public class YkneoOath extends Applet {
@@ -17,6 +18,8 @@ public class YkneoOath extends Applet {
 	private static final short _0 = 0;
 	
 	private byte[] tempBuf;
+	
+	private OwnerPIN lockCode;
 
 	public YkneoOath() {
 		tempBuf = JCSystem.makeTransientByteArray((short) 512, JCSystem.CLEAR_ON_DESELECT);
@@ -38,8 +41,15 @@ public class YkneoOath extends Applet {
 		byte p1 = buf[ISO7816.OFFSET_P1];
 		byte p2 = buf[ISO7816.OFFSET_P2];
 		short p1p2 = Util.makeShort(p1, p2);
+		byte ins = buf[ISO7816.OFFSET_INS];
 		
-		switch (buf[ISO7816.OFFSET_INS]) {
+		if(lockCode != null && ins != 0xa3) {
+			if(!lockCode.isValidated()) {
+				ISOException.throwIt(ISO7816.SW_SECURITY_STATUS_NOT_SATISFIED);
+			}
+		}
+		
+		switch (ins) {
 		case (byte)0x01: // put
 			if(p1p2 == 0x0000) {
 				handlePut(buf);
@@ -54,6 +64,12 @@ public class YkneoOath extends Applet {
 				ISOException.throwIt(ISO7816.SW_WRONG_P1P2);
 			}
 			break;
+		case (byte)0x03: // set code
+			if(p1p2 == 0x0000) {
+				handleChangeCode(buf);
+			} else {
+				ISOException.throwIt(ISO7816.SW_WRONG_P1P2);
+			}
 		case (byte)0xa1: // list
 			if(p1p2 == 0x0000) {
 				sendLen = handleList(buf);
@@ -68,12 +84,54 @@ public class YkneoOath extends Applet {
 				ISOException.throwIt(ISO7816.SW_WRONG_P1P2);
 			}
 			break;
+		case (byte)0xa3: // validate code
+			if(p1p2 == 0x0000) {
+				handleValidate(buf);
+			} else {
+				ISOException.throwIt(ISO7816.SW_WRONG_P1P2);
+			}
 		default:
 			ISOException.throwIt(ISO7816.SW_INS_NOT_SUPPORTED);
 		}
 		
 		if(sendLen > 0) {
 			apdu.setOutgoingAndSend(_0 , sendLen);
+		}
+	}
+
+	private void handleValidate(byte[] buf) {
+		short offs = 5;
+		if(buf[offs++] != 0x7e) {
+			ISOException.throwIt(ISO7816.SW_WRONG_DATA);
+		}
+		short len = getLength(buf, offs++);
+		if(len == 0 || len > 32) {
+			ISOException.throwIt(ISO7816.SW_DATA_INVALID);
+		}
+		if(lockCode != null) {
+			if(!lockCode.check(buf, offs, (byte) len)) {
+				ISOException.throwIt((short) (0x6300 + lockCode.getTriesRemaining()));
+			}
+		}
+	}
+
+	private void handleChangeCode(byte[] buf) {
+		short offs = 5;
+		if(buf[offs++] != 0x7e) {
+			ISOException.throwIt(ISO7816.SW_WRONG_DATA);
+		}
+		short len = getLength(buf, offs++);
+		if(len == 0) {
+			lockCode = null;
+			JCSystem.requestObjectDeletion();
+		} else {
+			if(len > 32) {
+				ISOException.throwIt(ISO7816.SW_DATA_INVALID);
+			}
+			if(lockCode == null) {
+				lockCode = new OwnerPIN((byte) 10, (byte)32);
+			}
+			lockCode.update(buf, offs, (byte) len);
 		}
 	}
 
