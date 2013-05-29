@@ -33,6 +33,7 @@ public class OathObj {
 	private static MessageDigest sha256;
 	
 	private byte[] lastChal;
+	private short lastOffs;
 	private byte props;
 	
 	public OathObj() {
@@ -140,20 +141,28 @@ public class OathObj {
 			if(lastChal == null) {
 				lastChal = new byte[hmac_buf_size];
 			}
-			// XXX: this will only work properly if the lengths are constant,
-			//  we could try to right-adjust the arrays to make a 16 byte array "larger" than an 8 byte array..
-			for(short i = 0; i < len; i++) {
-				short offs = (short) (i + chalOffs);
+			short j = 0;
+			short thisOffs = (short) (hmac_buf_size - len);
+			for(short i = lastOffs; i < hmac_buf_size; i++) {
+				if(i < thisOffs) {
+					if(lastChal[i] == 0) {
+						continue;
+					} else {
+						ISOException.throwIt(ISO7816.SW_SECURITY_STATUS_NOT_SATISFIED);
+					}
+				}
+				short offs = (short) (j + chalOffs);
+				j++;
 				if(chal[offs] > lastChal[i]) {
 					break;
-				} else if(lastChal[i] == 0 || lastChal[i] == chal[offs]) {
+				} else if(lastChal[i] == chal[offs]) {
 					continue;
 				} else {
 					ISOException.throwIt(ISO7816.SW_SECURITY_STATUS_NOT_SATISFIED);
 				}
 			}
-			Util.arrayFillNonAtomic(lastChal, _0, hmac_buf_size, (byte) 0);
-			Util.arrayCopy(chal, chalOffs, lastChal, _0, len);
+			lastOffs = thisOffs;
+			Util.arrayCopy(chal, chalOffs, lastChal, thisOffs, len);
 		}
 		
 		digest.reset();
