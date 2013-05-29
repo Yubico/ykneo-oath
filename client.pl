@@ -60,6 +60,8 @@ if(defined($code)) {
   }
 }
 
+die "no action specified" unless $action;
+
 if($action eq 'change-code') {
   die "No key specified." unless $key;
   my $key_p = unpack_hex($key);
