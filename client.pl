@@ -173,7 +173,7 @@ sub send_apdu {
   if($debug) {
     print "  Recv = ";
     foreach my $tmpVal (@{$repl}) {
-      printf ("%02X ", $tmpVal);
+      printf ("%02x ", $tmpVal);
     } print "\n";
   }
   return $repl;
