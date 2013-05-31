@@ -51,7 +51,7 @@ my $card = new Chipcard::PCSC::Card($rContext, $reader, $Chipcard::PCSC::SCARD_S
 die "Card connection failed." unless $card;
 
 # select applet
-$card->TransmitWithCheck("00 a4 04 00 07 a0 00 00 05 27 21 01", "90 00", $debug);
+$card->TransmitWithCheck("00 a4 04 00 07 a0 00 00 05 27 21 01", "90 00", $debug) or die "Failed to select applet.";
 
 if(defined($code)) {
   my $code_p = unpack_hex($code);
