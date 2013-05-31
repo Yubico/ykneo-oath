@@ -41,6 +41,7 @@ foreach my $read (@readers) {
   if(defined($readerMatch)) {
     next unless $read =~ m/.*$readerMatch.*/;
   }
+  print "Using reader $read\n" if $debug;
   $reader = $read;
   last;
 }
