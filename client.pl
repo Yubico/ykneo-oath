@@ -50,7 +50,7 @@ my $card = new Chipcard::PCSC::Card($rContext, $reader, $Chipcard::PCSC::SCARD_S
 die "Card connection failed." unless $card;
 
 # select applet
-$card->TransmitWithCheck("00 a4 04 00 07 a0 00 00 05 27 21 01", "90 00");
+$card->TransmitWithCheck("00 a4 04 00 07 a0 00 00 05 27 21 01", "90 00", $debug);
 
 if(defined($code)) {
   my $code_p = unpack_hex($code);
@@ -175,14 +175,14 @@ sub unpack_hex {
 sub send_apdu {
   my $apdu = shift;
   if($debug) {
-    print "  Send = ";
+    print "=> ";
     foreach my $tmp (@$apdu) {
       printf ("%02x ", $tmp);
     } print "\n";
   }
   my $repl = $card->Transmit($apdu);
   if($debug) {
-    print "  Recv = ";
+    print "<= ";
     foreach my $tmpVal (@{$repl}) {
       printf ("%02x ", $tmpVal);
     } print "\n";
