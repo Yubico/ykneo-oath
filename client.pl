@@ -8,6 +8,7 @@ use warnings;
 
 use Chipcard::PCSC;
 use Getopt::Long;
+use Pod::Usage;
 
 my $readerMatch;
 my $action;
@@ -18,6 +19,7 @@ my $type = 1;
 my $code;
 my $debug;
 my $digits = 6;
+my $help = 0;
 
 GetOptions("reader=s" => \$readerMatch,
            "list" => \&set_action,
@@ -31,7 +33,10 @@ GetOptions("reader=s" => \$readerMatch,
            "code=s" => \$code,
            "change-code" => \&set_action,
            "debug" => \$debug,
-           "digits=i" => \$digits);
+           "digits=i" => \$digits,
+           "help" => \$help);
+
+pod2usage(1) if $help;
 
 my $reader;
 
@@ -191,3 +196,35 @@ sub send_apdu {
   }
   return $repl;
 }
+
+__END__
+
+=head1 NAME
+
+client.pl - communicate with ykneo-oath
+
+=head1 SYNOPSIS
+
+client.pl [options] [action]
+
+ Options:
+  -reader         partial reader name to match
+  -name           name of credential to operate on (valid for put/delete/calculate)
+  -key            key to operate on (valid for put/change-code)
+  -challenge      challenge to send (valid for calculate)
+  -digits         number of digits of oath code to construct (valid for calculate)
+  -type           type of credential (1=HMAC-SHA1, 2=HMAC-SHA256) (valid for put)
+  -code           unlock-code to send
+  -debug          debug mode (show all APDUs sent)
+
+ Actions:
+  -list           list loaded credentials
+  -put            put a new credential to key
+  -delete         delete a credential
+  -calculate      calculate an oath code
+  -change-code    change unlock-code
+
+ Key and challenge take the value as either an ascii string or as a byte array 
+  like: '6b 61 6b 61 ' (note the trailing space).
+
+=cut
