@@ -41,11 +41,11 @@ foreach my $read (@readers) {
   if(defined($readerMatch)) {
     next unless $read =~ m/.*$readerMatch.*/;
   }
-  print "Using reader $read\n" if $debug;
   $reader = $read;
   last;
 }
 die "No reader found." unless $reader;
+print "Using reader $reader\n" if $debug;
 
 my $card = new Chipcard::PCSC::Card($rContext, $reader, $Chipcard::PCSC::SCARD_SHARE_SHARED);
 die "Card connection failed." unless $card;
