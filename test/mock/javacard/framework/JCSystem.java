@@ -9,4 +9,7 @@ public class JCSystem {
 	public static byte[] makeTransientByteArray(short length, byte event) {
 		return new byte[length];
 	}
+	
+    public static void requestObjectDeletion() {
+    }
 }
