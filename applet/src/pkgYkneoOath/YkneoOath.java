@@ -249,7 +249,7 @@ public class YkneoOath extends Applet {
 		if(buf[offs] <= 0x7f) {
 			length = buf[offs];
 		} else if(buf[offs] == (byte)0x81) {
-			length = buf[offs + 1];
+			length = buf[(short)(offs + 1)];
 		} else if(buf[offs] == (byte)0x82) {
 			length = Util.getShort(buf, (short) (offs + 1));
 		} else {
