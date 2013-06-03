@@ -235,7 +235,7 @@ public class YkneoOath extends Applet {
 		object.setKey(buf, offs, keyType, len);
 		offs += len;
 		
-		if(buf[offs++] == 0x7c) {
+		if(offs < buf.length && buf[offs++] == 0x7c) {
 			object.setProp(buf[offs]);
 		} else {
 			object.setProp((byte) 0);
