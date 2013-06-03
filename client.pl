@@ -208,13 +208,13 @@ client.pl - communicate with ykneo-oath
 client.pl [options] [action]
 
  Options:
-  -reader         partial reader name to match
-  -name           name of credential to operate on (valid for put/delete/calculate)
-  -key            key to operate on (valid for put/change-code)
-  -challenge      challenge to send (valid for calculate)
-  -digits         number of digits of oath code to construct (valid for calculate)
-  -type           type of credential (1=HMAC-SHA1, 2=HMAC-SHA256) (valid for put)
-  -code           unlock-code to send
+  -reader=name    partial reader name to match
+  -name=name      name of credential to operate on (valid for put/delete/calculate)
+  -key=key        key to operate on (valid for put/change-code)
+  -challenge=chal challenge to send (valid for calculate)
+  -digits=[1-9]   number of digits of oath code to construct (valid for calculate)
+  -type=[1,2]     type of credential (1=HMAC-SHA1, 2=HMAC-SHA256) (valid for put)
+  -code=code      unlock-code to send
   -debug          debug mode (show all APDUs sent)
 
  Actions:
