@@ -15,3 +15,8 @@
 
 # validate code:
 00 a3 00 00 06 7e 04 6b 61 6b 61
+
+# calculate:
+00 a2 00 00 10
+7a 04 6b 61 6b 61 # name kaka
+7d 08 00 00 00 00 00 00 00 01 # challenge 0x00000001
