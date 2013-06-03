@@ -11,11 +11,18 @@ import java.util.Arrays;
 
 import javacard.framework.ISOException;
 
+import org.junit.After;
 import org.junit.Test;
 
 import pkgYkneoOath.OathObj;
 
 public class OathObjTest {
+	@After
+	public void tearDown() {
+		OathObj.firstObject = null;
+		OathObj.lastObject = null;
+	}
+	
 	@Test
 	public void TestCreate() {
 		OathObj obj = new OathObj();
