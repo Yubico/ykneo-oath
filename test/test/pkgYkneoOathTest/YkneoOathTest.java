@@ -37,7 +37,7 @@ public class YkneoOathTest {
 	
 	@Test
 	public void testEmptyList() {
-
+		assertNull(OathObj.firstObject);
 		ykneoOath.process(listApdu);
 		byte[] buf = listApdu.getBuffer();
 		assertEquals((byte)0xa1, buf[0]);
@@ -51,7 +51,9 @@ public class YkneoOathTest {
 				0x7a, 0x04, 'k', 'a', 'k', 'a',
 				0x7b, 0x01, 0x14, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b
 		});
+		assertNull(OathObj.firstObject);
 		ykneoOath.process(putApdu);
+		assertNotNull(OathObj.firstObject);
 		ykneoOath.process(listApdu);
 		byte[] buf = listApdu.getBuffer();
 		assertEquals((byte)0xa1, buf[0]);
