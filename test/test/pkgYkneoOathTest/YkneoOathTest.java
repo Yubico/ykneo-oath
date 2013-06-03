@@ -55,14 +55,9 @@ public class YkneoOathTest {
 		ykneoOath.process(putApdu);
 		assertNotNull(OathObj.firstObject);
 		ykneoOath.process(listApdu);
-		byte[] buf = listApdu.getBuffer();
-		assertEquals((byte)0xa1, buf[0]);
-		assertEquals(6, buf[1]);
-		assertEquals(1, buf[2]);
-		assertEquals(4, buf[3]);
-		byte[] name = new byte[4];
-		System.arraycopy(buf, 4, name, 0, 4);
-		assertArrayEquals(new byte[] {'k', 'a', 'k', 'a'}, name);
+		byte[] expect = new byte[256];
+		System.arraycopy(new byte[] {(byte) 0xa1, 6, 1, 4, 'k', 'a', 'k', 'a'}, 0, expect, 0, 8);
+		assertArrayEquals(expect, listApdu.getBuffer());
 		
 		APDU calcApdu = new APDU(new byte[] {
 			0x00, (byte) 0xa2, 0x00, 0x00, 0x10,
@@ -71,7 +66,6 @@ public class YkneoOathTest {
 			0x00
 		});
 		ykneoOath.process(calcApdu);
-		buf = calcApdu.getBuffer();
 		assertArrayEquals(new byte[]{
 				0x7d, 0x14, (byte) 0xb3, (byte) 0x99, (byte) 0xbd, (byte) 0xfc, (byte) 0x9d, 0x05, (byte) 0xd1, 0x2a, (byte) 0xc4, 0x35, (byte) 0xc4,
 				(byte) 0xc8, (byte) 0xd6, (byte) 0xcb, (byte) 0xd2, 0x47, (byte) 0xc4, 0x0a, 0x30, (byte) 0xf1
