@@ -147,19 +147,22 @@ public class OathObj {
 		
 		if((props & PROP_ALWAYS_INCREASING) == PROP_ALWAYS_INCREASING) {
 			short thisOffs = (short) (hmac_buf_size - len);
-			for(short i = lastOffs < thisOffs ? lastOffs : thisOffs; i < hmac_buf_size; i++) {
+			short i = lastOffs < thisOffs ? lastOffs : thisOffs;
+			for(; i < hmac_buf_size; i++) {
 				if(i < thisOffs) {
 					if(lastChal[i] == 0) {
 						continue;
 					} else {
 						ISOException.throwIt(ISO7816.SW_SECURITY_STATUS_NOT_SATISFIED);
 					}
+				} else {
+					break;
 				}
-				short offs = (short) (i - thisOffs + chalOffs);
-				byte compRes = Util.arrayCompare(chal, offs, lastChal, i, len);
-				if(compRes == -1) {
-					ISOException.throwIt(ISO7816.SW_SECURITY_STATUS_NOT_SATISFIED);
-				}
+			}
+			short offs = (short) (i - thisOffs + chalOffs);
+			byte compRes = Util.arrayCompare(chal, offs, lastChal, i, len);
+			if(compRes == -1) {
+				ISOException.throwIt(ISO7816.SW_SECURITY_STATUS_NOT_SATISFIED);
 			}
 			lastOffs = thisOffs;
 			Util.arrayCopy(chal, chalOffs, lastChal, thisOffs, len);
