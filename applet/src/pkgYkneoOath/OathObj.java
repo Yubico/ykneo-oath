@@ -79,6 +79,14 @@ public class OathObj {
 	
 	public void setProp(byte props) {
 		this.props = props;
+		if((props & PROP_ALWAYS_INCREASING) == PROP_ALWAYS_INCREASING) {
+			if(lastChal == null) {
+				lastChal = new byte[hmac_buf_size];
+			} else {
+				Util.arrayFillNonAtomic(lastChal, _0, hmac_buf_size, (byte) 0);
+				lastOffs = 0;
+			}
+		}
 	}
 	
 	public void addObject() {
@@ -138,9 +146,6 @@ public class OathObj {
 		}
 		
 		if((props & PROP_ALWAYS_INCREASING) == PROP_ALWAYS_INCREASING) {
-			if(lastChal == null) {
-				lastChal = new byte[hmac_buf_size];
-			}
 			short j = 0;
 			short thisOffs = (short) (hmac_buf_size - len);
 			for(short i = lastOffs < thisOffs ? lastOffs : thisOffs; i < hmac_buf_size; i++) {
