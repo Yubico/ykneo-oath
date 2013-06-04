@@ -36,12 +36,16 @@ public class Util {
     }
     
     public static byte arrayCompare(byte[] src, short srcOff, byte[] dest, short destOff, short length) {
+    	if(srcOff + length > src.length || destOff + length > dest.length) {
+    		throw new ArrayIndexOutOfBoundsException();
+    	}
     	for(int i = 0; i < length; i++) {
-    		if(srcOff + 1 + i > src.length || destOff + 1 + i > dest.length) {
+    		short thisSrc = (short) (src[srcOff + i] & 0x00ff);
+    		short thisDest = (short) (dest[destOff + i] & 0x00ff);
+    		if(thisSrc > thisDest) {
     			return 1;
-    		}
-    		if(src[srcOff + i] != dest[destOff + i]) {
-    			return 1;
+    		} else if(thisSrc < thisDest) {
+    			return -1;
     		}
     	}
     	return 0;
