@@ -1,0 +1,9 @@
+Building with ant
+-----------------
+
+Get the Java Card Development Kit 2.2.2 from Oracle
+(http://www.oracle.com/technetwork/java/javasebusiness/downloads/java-archive-downloads-javame-419430.html#java_card_kit-2.2.2-oth-JPR).
+Unpack and point the ant variable JAVACARD_HOME at the folder
+java_card_kit-2_2_2. The project should now build and run tests by invoking
+ant. The cap file for loading on card will be at
+applet/bin/pkgYkneoOath/javacard/pkgYkneoOath.cap
