@@ -1,9 +1,66 @@
-Building with ant
------------------
+YubiKey NEO App: OATH
+=====================
 
-Get the Java Card Development Kit 2.2.2 from Oracle
-(http://www.oracle.com/technetwork/java/javasebusiness/downloads/java-archive-downloads-javame-419430.html#java_card_kit-2.2.2-oth-JPR).
-Unpack and point the ant variable JAVACARD_HOME at the folder
-java_card_kit-2_2_2. The project should now build and run tests by invoking
-ant. The cap file for loading on card will be at
-applet/bin/pkgYkneoOath/javacard/pkgYkneoOath.cap
+This project implement the HMAC-SHA* card functionality used on the
+YubiKey NEO device that is sold by Yubico.  Its primary use is to use
+the YubiKey NEO to generate OATH HOTP/TOTP one-time-passwords.
+
+License
+-------
+
+Proprietary internal code, not for redistribution!
+Copyright (c) 2013 Yubico AB.  All rights reserved.
+
+Building
+--------
+
+It is possible to build the project using proprietary NXP Java Card
+tools.  Alternatively, we describe below a process using Ant and the
+Java Card Development Kit.
+
+You need to install the Java Card Development Kit version 2.2.2,
+download it from:
+
+  http://www.oracle.com/technetwork/java/javasebusiness/downloads/java-archive-downloads-javame-419430.html#java_card_kit-2.2.2-oth-JPR
+
+Unpack it into a new directory called for example "jckit" like this:
+
+  $ mkdir jckit
+  $ cd jckit
+  $ unzip /path/to/java_card_kit-2_2_2-linux.zip
+  $ cd java_card_kit-2_2_2/
+  $ unzip java_card_kit-2_2_2-rr-bin-linux-do.zip
+
+Point the ant variable JAVACARD_HOME at the folder
+java_card_kit-2_2_2.
+
+The project should now build and run tests by invoking ant.
+
+The cap file for loading on card will be at:
+
+  applet/bin/pkgYkneoOath/javacard/pkgYkneoOath.cap
+
+For loading the applet onto the card first make sure the YubiKey NEO
+is in the HID/CCID or CCID mode, using ykpers from the YubiKey
+Personalization tool:
+
+  http://code.google.com/p/yubikey-personalization/
+  https://github.com/Yubico/yubikey-personalization
+
+For example:
+
+  sudo ykpersonalize -m82
+
+Then install the gpshell tool from Global Platform:
+
+  http://sourceforge.net/projects/globalplatform/
+
+The projects that are needed is the GlobalPlatform Library 6.0.0,
+GPShell 1.4.4, and gppcscconnectionplugin 1.1.0.
+
+You need to whitelist the device in /etc/libccid_Info.plist.
+
+When the CAP file has been built and is available in the path shown
+above, you may use the gpshell tool to load it:
+
+  $ gpshell gpinstall.txt
