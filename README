@@ -32,9 +32,10 @@ Unpack it into a new directory called for example "jckit" like this:
   $ unzip java_card_kit-2_2_2-rr-bin-linux-do.zip
 
 Point the ant variable JAVACARD_HOME at the folder
-java_card_kit-2_2_2.
+java_card_kit-2_2_2.  The project should now build and run tests by
+invoking ant.  For example:
 
-The project should now build and run tests by invoking ant.
+  ant -DJAVACARD_HOME=/home/jas/jckit/java_card_kit-2_2_2/
 
 The cap file for loading on card will be at:
 
