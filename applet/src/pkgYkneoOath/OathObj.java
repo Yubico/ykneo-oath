@@ -64,7 +64,9 @@ public class OathObj {
 	}
 	
 	public void setName(byte[] buf, short offs, short len) {
-		name = new byte[len];
+		if(name == null || len != name.length) {
+			name = new byte[len];
+		}
 		Util.arrayCopy(buf, offs, name, _0, len);
 	}
 	

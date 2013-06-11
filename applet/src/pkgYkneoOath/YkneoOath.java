@@ -38,6 +38,13 @@ public class YkneoOath extends Applet {
 
 	public void process(APDU apdu) {
 		if (selectingApplet()) {
+			if(authObj != null) {
+				byte[] buf = apdu.getBuffer();
+				buf[0] = 0x7a;
+				buf[1] = (byte) authObj.getNameLength();
+				authObj.getName(buf, (short) 2);
+				apdu.setOutgoingAndSend(_0, (short) (buf[1] + 2));
+			}
 			return;
 		}
 
@@ -170,6 +177,8 @@ public class YkneoOath extends Applet {
 				authObj = new OathObj();
 			}
 			authObj.setKey(buf, offs, type, len);
+			rng.generateData(tempBuf, _0, (short) 8);
+			authObj.setName(tempBuf, _0, (short)8);
 		}
 	}
 
