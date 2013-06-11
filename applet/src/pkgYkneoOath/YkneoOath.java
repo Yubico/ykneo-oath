@@ -10,19 +10,26 @@ import javacard.framework.Applet;
 import javacard.framework.ISO7816;
 import javacard.framework.ISOException;
 import javacard.framework.JCSystem;
-import javacard.framework.OwnerPIN;
 import javacard.framework.Util;
+import javacard.security.RandomData;
 
 public class YkneoOath extends Applet {
 	
 	private static final short _0 = 0;
+
+	private static final byte CHALLENGE_LENGTH = 8;
 	
 	private byte[] tempBuf;
+
+	private OathObj authObj;
+	private byte[] authState;
 	
-	private OwnerPIN lockCode;
+	private RandomData rng;
 
 	public YkneoOath() {
 		tempBuf = JCSystem.makeTransientByteArray((short) 512, JCSystem.CLEAR_ON_DESELECT);
+		authState = JCSystem.makeTransientByteArray((short)2, JCSystem.CLEAR_ON_DESELECT);
+		rng = RandomData.getInstance(RandomData.ALG_PSEUDO_RANDOM);
 	}
 
 	public static void install(byte[] bArray, short bOffset, byte bLength) {
@@ -43,6 +50,12 @@ public class YkneoOath extends Applet {
 		short p1p2 = Util.makeShort(p1, p2);
 		byte ins = buf[ISO7816.OFFSET_INS];
 		
+		if(authObj != null && ins != (byte)0xa3) {
+			if(authState[1] != 1) {
+				ISOException.throwIt(ISO7816.SW_SECURITY_STATUS_NOT_SATISFIED);
+			}
+		}
+		/*
 		if(lockCode != null && ins != (byte)0xa3) {
 			// if the lockCode is blocked we allow reset by ins ff
 			if(lockCode.getTriesRemaining() == 0 && ins == (byte)0xff) {
@@ -52,7 +65,7 @@ public class YkneoOath extends Applet {
 			if(!lockCode.isValidated()) {
 				ISOException.throwIt(ISO7816.SW_SECURITY_STATUS_NOT_SATISFIED);
 			}
-		}
+		}*/
 		
 		switch (ins) {
 		case (byte)0x01: // put
@@ -92,7 +105,7 @@ public class YkneoOath extends Applet {
 			break;
 		case (byte)0xa3: // validate code
 			if(p1p2 == 0x0000) {
-				handleValidate(buf);
+				sendLen = handleValidate(buf);
 			} else {
 				ISOException.throwIt(ISO7816.SW_WRONG_P1P2);
 			}
@@ -107,45 +120,64 @@ public class YkneoOath extends Applet {
 	}
 
 	private void handleReset() {
-		lockCode = null;
+		authObj = null;
 		OathObj.firstObject = null;
 		OathObj.lastObject = null;
 		JCSystem.requestObjectDeletion();
 	}
 
-	private void handleValidate(byte[] buf) {
-		short offs = 5;
-		if(buf[offs++] != 0x7e) {
-			ISOException.throwIt(ISO7816.SW_WRONG_DATA);
-		}
-		short len = getLength(buf, offs++);
-		if(len == 0 || len > 32) {
+	private short handleValidate(byte[] buf) {
+		if(authObj == null) {
 			ISOException.throwIt(ISO7816.SW_DATA_INVALID);
 		}
-		if(lockCode != null) {
-			if(!lockCode.check(buf, offs, (byte) len)) {
-				ISOException.throwIt((short) (0x6300 + lockCode.getTriesRemaining()));
+		short offs = 5;
+		byte ins = buf[offs++];
+		short len = getLength(buf, offs);
+		offs += getLengthBytes(len);
+		if(authState[0] == 0  && ins == 0x7e) {
+			authState[0] = 1;
+			short respLen =  authObj.calculate(buf, offs, len, tempBuf, _0);
+			buf[0] = 0x7e;
+			buf[1] = (byte) (respLen + 6 + CHALLENGE_LENGTH);
+			buf[2] = 0x7d;
+			buf[3] = (byte) respLen;
+			Util.arrayCopyNonAtomic(tempBuf, _0, buf, (short) 4, respLen);
+			offs = (short) (respLen + 4);
+			buf[offs++] = 0x7f;
+			buf[offs++] = CHALLENGE_LENGTH;
+			rng.generateData(buf, offs, CHALLENGE_LENGTH);
+			authObj.calculate(buf, offs, CHALLENGE_LENGTH, tempBuf, _0);
+			offs += CHALLENGE_LENGTH;
+			return offs;
+		} else if(authState[0] == 1 && ins == 0x7f) {
+			if(Util.arrayCompare(buf, offs, tempBuf, _0, len) == 0) {
+				authState[1] = 1;
+				return 0;
+			} else {
+				ISOException.throwIt((short) 0xcafe);
 			}
+		} else {
+			ISOException.throwIt(ISO7816.SW_WRONG_DATA);
 		}
+		return 0;
 	}
 
 	private void handleChangeCode(byte[] buf) {
 		short offs = 5;
-		if(buf[offs++] != 0x7e) {
+		if(buf[offs++] != 0x7b) {
 			ISOException.throwIt(ISO7816.SW_WRONG_DATA);
 		}
-		short len = getLength(buf, offs++);
+		byte type = buf[offs++];
+		short len = getLength(buf, offs);
+		offs += getLengthBytes(len);
 		if(len == 0) {
-			lockCode = null;
+			authObj = null;
 			JCSystem.requestObjectDeletion();
 		} else {
-			if(len > 32) {
-				ISOException.throwIt(ISO7816.SW_DATA_INVALID);
+			if(authObj == null) {
+				authObj = new OathObj();
 			}
-			if(lockCode == null) {
-				lockCode = new OwnerPIN((byte) 10, (byte)32);
-			}
-			lockCode.update(buf, offs, (byte) len);
+			authObj.setKey(buf, offs, type, len);
 		}
 	}
 
