@@ -154,7 +154,7 @@ public class YkneoOath extends Applet {
 				authState[1] = 1;
 				return 0;
 			} else {
-				ISOException.throwIt((short) 0xcafe);
+				ISOException.throwIt(ISO7816.SW_WRONG_DATA);
 			}
 		} else {
 			ISOException.throwIt(ISO7816.SW_WRONG_DATA);
