@@ -9,6 +9,9 @@ use warnings;
 use Chipcard::PCSC;
 use Getopt::Long;
 use Pod::Usage;
+use Digest::SHA qw(hmac_sha1 hmac_sha256);
+
+my $challenge_length = 8;
 
 my $readerMatch;
 my $action;
@@ -61,12 +64,53 @@ die "Failed to select applet." unless defined $sw;
 
 if(defined($code)) {
   my $code_p = unpack_hex($code);
-  my $len = scalar(@$code_p) + 2;
-  my @apdu = (0x00, 0xa3, 0x00, 0x00, $len, 0x7e, scalar(@$code_p), @$code_p);
-  my $repl = send_apdu(\@apdu);
-  if($repl->[0] != 0x90) {
-    die "wrong code, " . $repl->[1] . " attempts left.";
+  my $challenge;
+  for(my $i = 0; $i < $challenge_length; $i++) {
+    $challenge .= sprintf("%02x ", rand(0xff));
   }
+  my $chal_p = unpack_hex($challenge);
+  my $len = scalar(@$chal_p) + 2;
+  my @apdu = (0x00, 0xa3, 0x00, 0x00, $len, 0x7e, $challenge_length, @$chal_p);
+  my $repl = send_apdu(\@apdu);
+  if($repl->[0] != 0x7e) {
+    die "wrong answer from server.." . $repl->[0];
+  }
+  my $length = $repl->[3];
+  my $hash_func;
+  if($length == 20) {
+    $hash_func = \&hmac_sha1;
+  } elsif($length == 32) {
+    $hash_func = \&hmac_sha256;
+  } else {
+    die "unknown length: $length";
+  }
+  my @answer;
+  for(my $i = 4; $i < $length + 4; $i++) {
+    push(@answer, $repl->[$i]);
+  }
+  my $answer_pack = pack('C' . $length, @answer);
+  my $code_pack = pack('C' . scalar(@$code_p), @$code_p);
+  my $chal_pack = pack('C' . $challenge_length, @$chal_p);
+  my $correct = &$hash_func($chal_pack, $code_pack);
+  if($correct ne $answer_pack) {
+    die "answer does not match expected!";
+  }
+  if($repl->[$length + 4] != 0x7f) {
+    die "unexpected tag: " . $repl->[$length + 4];
+  }
+  my $offs = $length + 6;
+  $length = $repl->[$length + 5];
+  my $new_chal;
+  for(my $i = $offs; $i < $length + $offs; $i++) {
+    $new_chal .= sprintf("%02x ", $repl->[$i]);
+  }
+  $chal_p = unpack_hex($new_chal);
+  $chal_pack = pack('C' . $length, @$chal_p);
+  my $resp = &$hash_func($chal_pack, $code_pack);
+  my @resp_p = unpack('C*', $resp);
+  $len = scalar(@resp_p) + 2;
+  @apdu = (0x00, 0xa3, 0x00, 0x00, $len, 0x7f, scalar(@resp_p), @resp_p);
+  $repl = send_apdu(\@apdu);
 }
 
 die "no action specified" unless $action;
@@ -75,7 +119,7 @@ if($action eq 'change-code') {
   die "No key specified." unless $key;
   my $key_p = unpack_hex($key);
   my $len = scalar(@$key_p) + 2;
-  my @apdu = (0x00, 0x03, 0x00, 0x00, $len, 0x7e, scalar(@$key_p), @$key_p);
+  my @apdu = (0x00, 0x03, 0x00, 0x00, $len, 0x7b, $type, scalar(@$key_p), @$key_p);
   my $repl = send_apdu(\@apdu);
   if($repl->[0] != 0x90) {
     die "failed setting code.";
@@ -224,7 +268,7 @@ client.pl [options] [action]
   -calculate      calculate an oath code
   -change-code    change unlock-code
 
- Key and challenge take the value as either an ascii string or as a byte array 
-  like: '6b 61 6b 61 ' (note the trailing space).
+ Key, challenge and code take the value as either an ascii string or as a byte
+  array like: '6b 61 6b 61 ' (note the trailing space).
 
 =cut
