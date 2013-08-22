@@ -53,7 +53,7 @@
     </javac>
   </target>
   <target name="test" description="run tests" depends="compileTest">
-    <junit printSummary="yes">
+    <junit printSummary="no" fork="yes" failureproperty="junit.failure">
       <classpath>
         <pathelement location="${test.build}"/>
         <pathelement path="${build}"/>
@@ -65,5 +65,6 @@
         <fileset dir="${test.src}" includes="**/*.java" />
       </batchtest>
     </junit>
+    <fail if="junit.failure" message="Unit test(s) failed.  See reports!"/>
   </target>
 </project>
