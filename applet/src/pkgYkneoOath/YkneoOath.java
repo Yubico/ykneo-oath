@@ -253,6 +253,9 @@ public class YkneoOath extends Applet {
 		if(object == null) {
 			object = new OathObj();
 			object.setName(buf, offs, len);
+		} else {
+			// make sure we protect against tearing
+			object.removeObject();
 		}
 		offs += len;
 		
