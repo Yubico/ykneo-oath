@@ -5,6 +5,8 @@ package pkgYkneoOathTest;
  * All rights reserved.
  */
 
+import java.util.Arrays;
+
 import javacard.framework.APDU;
 
 import org.junit.After;
@@ -90,6 +92,7 @@ public class YkneoOathTest {
 		assertNull(OathObj.firstObject);
 		ykneoOath.process(putApdu);
 		assertNotNull(OathObj.firstObject);
+		assertNull(OathObj.firstObject.nextObject);
 		ykneoOath.process(listApdu);
 		byte[] expect = new byte[256];
 		System.arraycopy(new byte[] {(byte) 0xa1, 6, 1, 4, 'k', 'a', 'k', 'a'}, 0, expect, 0, 8);
@@ -110,6 +113,14 @@ public class YkneoOathTest {
 		
 		// make sure there is only one object after overwrite
 		assertEquals(OathObj.firstObject, OathObj.lastObject);
+		assertNull(OathObj.firstObject.nextObject);
+		
+		byte[] buf = listApdu.getBuffer();
+		Arrays.fill(buf, (byte)0x00);
+		buf[1] = (byte)0xa1;
+		ykneoOath.process(listApdu);
+		System.arraycopy(new byte[] {(byte) 0xa1, 6, 1, 4, 'k', 'a', 'k', 'a'}, 0, expect, 0, 8);
+		assertArrayEquals(expect, listApdu.getBuffer());
 		
 		calcApdu = new APDU(new byte[] {
 				0x00, (byte) 0xa2, 0x00, 0x00, 0x10,
