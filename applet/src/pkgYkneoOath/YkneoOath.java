@@ -106,6 +106,13 @@ public class YkneoOath extends Applet {
 				ISOException.throwIt(ISO7816.SW_WRONG_P1P2);
 			}
 			break;
+		case (byte)0xa4: // calculate all codes
+			if(p1p2 == 0x0000) {
+				sendLen = handleCalcAll(buf);
+			} else {
+				ISOException.throwIt(ISO7816.SW_WRONG_P1P2);
+			}
+			break;
 		default:
 			ISOException.throwIt(ISO7816.SW_INS_NOT_SUPPORTED);
 		}
@@ -208,6 +215,29 @@ public class YkneoOath extends Applet {
 		Util.arrayCopy(tempBuf, _0, buf, offs, len);
 		
 		return (short) (len + getLengthBytes(len) + 1);
+	}
+	
+	private short handleCalcAll(byte[] buf) {
+		short offs = 5;
+		if(buf[offs++] != 0x7d) {
+			ISOException.throwIt(ISO7816.SW_WRONG_DATA);
+		}
+		short chalLen = getLength(buf, offs++);
+		Util.arrayCopyNonAtomic(buf, offs, tempBuf, _0, chalLen);
+
+		offs = 0;
+		OathObj obj = OathObj.firstObject;
+		while(obj != null) {
+			buf[offs++] = 0x7a;
+			buf[offs++] = (byte) obj.getNameLength();
+			offs += obj.getName(buf, offs);
+			buf[offs++] = 0x7d;
+			short len = obj.calculate(tempBuf, _0, chalLen, buf, (short) (offs + 1));
+			buf[offs++] = (byte) len;
+			offs += len;
+			obj = obj.nextObject;
+		}
+		return offs;
 	}
 
 	private short handleList(byte[] buf) {

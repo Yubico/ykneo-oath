@@ -31,6 +31,7 @@ GetOptions("reader=s" => \$readerMatch,
            "name=s" => \$name,
            "key=s" => \$key,
            "calculate" => \&set_action,
+           "calculate-all" => \&set_action,
            "challenge=s" => \$challenge,
            "type=i" => \$type,
            "code=s" => \$code,
@@ -177,11 +178,44 @@ if($action eq 'calculate') {
   die "error on calc" unless $repl->[0] == 0x7d;
   my $offs = $repl->[scalar(@$repl) - 3] & 0xf;
   $offs += 2; # status and length..
+  my $code = calc_oath($repl, $offs);
+  printf("code is %0${digits}d\n", $code);
+}
+
+if($action eq 'calculate-all') {
+  die "No challenge specified." unless $challenge;
+  my $chal_p = unpack_hex($challenge);
+  my $len = scalar(@$chal_p) + 2;
+  my @apdu = (0x00, 0xa4, 0x00, 0x00, $len, 0x7d, scalar(@$chal_p), @$chal_p);
+  my $repl = send_apdu(\@apdu);
+  $len = scalar(@$repl);
+  my $offs = 0;
+  while($offs < $len - 2) {
+    die "error on calc all" unless $repl->[$offs++] == 0x7a;
+    my $length = get_len($repl, $offs++);
+    for(my $i = 0; $i < $length; $i++) {
+      print chr($repl->[$offs + $i]);
+    }
+    $offs += $length;
+    die "error on calc all" unless $repl->[$offs++] == 0x7d;
+    $length = get_len($repl, $offs++);
+    my $mod = $repl->[$offs + $length - 1] & 0xf;
+    my $code = calc_oath($repl, $mod + $offs);
+    printf(": %0${digits}d", $code);
+    print "\n";
+    $offs += $length;
+  }
+}
+
+sub calc_oath {
+  my $repl = shift;
+  my $offs = shift;
+
   my $code = (($repl->[$offs++] & 0x7f) << 24) |
     (($repl->[$offs++] & 0xff) << 16) |
     (($repl->[$offs++] & 0xff) << 8) |
     ($repl->[$offs++] & 0xff);
-  printf("code is %0${digits}d\n", $code % (10 ** $digits));
+  return $code % (10 ** $digits);
 }
 
 sub get_len {
@@ -266,6 +300,7 @@ client.pl [options] [action]
   -put            put a new credential to key
   -delete         delete a credential
   -calculate      calculate an oath code
+  -calculate-all  calculate oath code for all loaded credentials
   -change-code    change unlock-code
 
  Key, challenge and code take the value as either an ascii string or as a byte
