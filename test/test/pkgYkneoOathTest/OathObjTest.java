@@ -5,9 +5,12 @@ package pkgYkneoOathTest;
  * All rights reserved.
  */
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 import javacard.framework.ISOException;
 
@@ -219,5 +222,51 @@ public class OathObjTest {
 		byte[] expected = new byte[] {(byte) 0x82, 0x55, (byte) 0x8a, 0x38, (byte) 0x9a, 0x44, 0x3c, 0x0e, (byte) 0xa4, (byte) 0xcc, (byte) 0x81, (byte) 0x98, (byte) 0x99, (byte) 0xf2, 0x08, 0x3a,
 				(byte) 0x85, (byte) 0xf0, (byte) 0xfa, (byte) 0xa3, (byte) 0xe5, 0x78, (byte) 0xf8, 0x07, 0x7a, 0x2e, 0x3f, (byte) 0xf4, 0x67, 0x29, 0x66, 0x5b};
 		assertArrayEquals(expected, res);
+	}
+
+	/* TOTP test vectors from rfc 6238 */
+	@Test
+	public void TestSha1Trunc() {
+		OathObj obj = new OathObj();
+		obj.setKey(new byte[] {0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x30}, (short)0, OathObj.HMAC_SHA1, (short)20);
+		Map<byte[], byte[]> challengeMap = new HashMap<byte[], byte[]>();
+		challengeMap.put(new byte[] {0, 0, 0, 0, 0, 0, 0, 1}, new byte[] { 0x41, 0x39, 0x7e, (byte) 0xea });
+		challengeMap.put(new byte[] {0, 0, 0, 0, 0x02, 0x35, 0x23, (byte) 0xec}, new byte[] { 0x36, 0x10, (byte) 0xf8, 0x4c });
+		challengeMap.put(new byte[] {0, 0, 0, 0, 0x02, 0x35, 0x23, (byte) 0xed}, new byte[] { 0x18, (byte) 0xad, (byte) 0xe8, (byte) 0xa7 });
+		challengeMap.put(new byte[] {0, 0, 0, 0, 0x02, 0x73, (byte) 0xef, 0x07}, new byte[] { 0x29, 0x11, 0x65, 0x64 });
+		challengeMap.put(new byte[] {0, 0, 0, 0, 0x03, (byte) 0xf9, 0x40, (byte) 0xaa}, new byte[] { 0x7b, 0x56, (byte) 0xb1, 0x3d });
+		challengeMap.put(new byte[] {0, 0, 0, 0, 0x27, (byte) 0xbc, (byte) 0x86, (byte) 0xaa}, new byte[] { 0x57, 0x57, (byte) 0x83, (byte) 0xaa });
+
+		for(byte[] chal : challengeMap.keySet()) {
+			byte[] result = new byte[4];
+			obj.calculateTruncated(chal, (short)0, (short) chal.length, result, (short)0);
+			String challenge = "";
+			for(byte c : chal) {
+				challenge += String.format("0x%02x ", c);
+			}
+			assertArrayEquals("challenge: " + challenge, challengeMap.get(chal), result);		}
+	}
+	
+	@Test
+	public void TestSha256Trunc() {
+		OathObj obj = new OathObj();
+		obj.setKey(new byte[] {0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x30, 0x31, 0x32}, (short)0, OathObj.HMAC_SHA256, (short)32);
+		Map<byte[], byte[]> challengeMap = new HashMap<byte[], byte[]>();
+		challengeMap.put(new byte[] {0, 0, 0, 0, 0, 0, 0, 1}, new byte[] { 0x2c, 0x78, (byte) 0xe0, 0x4e });
+		challengeMap.put(new byte[] {0, 0, 0, 0, 0x02, 0x35, 0x23, (byte) 0xec}, new byte[] { 0x5d, 0x77, 0x13, 0x26 });
+		challengeMap.put(new byte[] {0, 0, 0, 0, 0x02, 0x35, 0x23, (byte) 0xed}, new byte[] { 0x45, (byte) 0x8f, (byte) 0xf6, (byte) 0x92 });
+		challengeMap.put(new byte[] {0, 0, 0, 0, 0x02, 0x73, (byte) 0xef, 0x07}, new byte[] { 0x05, 0x79, 0x0d, (byte) 0xa0 });
+		challengeMap.put(new byte[] {0, 0, 0, 0, 0x03, (byte) 0xf9, 0x40, (byte) 0xaa}, new byte[] { 0x6a, (byte) 0xbb, (byte) 0xe5, 0x49 });
+		challengeMap.put(new byte[] {0, 0, 0, 0, 0x27, (byte) 0xbc, (byte) 0x86, (byte) 0xaa}, new byte[] { 0x2e, 0x5b, 0x55, (byte) 0xea });
+
+		for(byte[] chal : challengeMap.keySet()) {
+			byte[] result = new byte[4];
+			obj.calculateTruncated(chal, (short)0, (short) chal.length, result, (short)0);
+			String challenge = "";
+			for(byte c : chal) {
+				challenge += String.format("0x%02x ", c);
+			}
+			assertArrayEquals("challenge: " + challenge, challengeMap.get(chal), result);
+		}
 	}
 }
