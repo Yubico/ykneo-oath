@@ -172,12 +172,11 @@ if($action eq 'calculate') {
   my @name_p = unpack("C*", $name);
   my $chal_p = unpack_hex($challenge);
   my $len = scalar(@name_p) + 2 + scalar(@$chal_p) + 2;
-  my @apdu = (0x00, 0xa2, 0x00, 0x00, $len, 0x7a, scalar(@name_p), @name_p, 0x7d, scalar(@$chal_p), @$chal_p);
+  my @apdu = (0x00, 0xa2, 0x00, 0x01, $len, 0x7a, scalar(@name_p), @name_p, 0x7d, scalar(@$chal_p), @$chal_p);
   my $repl = send_apdu(\@apdu);
 
   die "error on calc" unless $repl->[0] == 0x7d;
-  my $offs = $repl->[scalar(@$repl) - 3] & 0xf;
-  $offs += 2; # status and length..
+  my $offs = 2; # status and length..
   my $code = calc_oath($repl, $offs);
   printf("code is %0${digits}d\n", $code);
 }
@@ -186,7 +185,7 @@ if($action eq 'calculate-all') {
   die "No challenge specified." unless $challenge;
   my $chal_p = unpack_hex($challenge);
   my $len = scalar(@$chal_p) + 2;
-  my @apdu = (0x00, 0xa4, 0x00, 0x00, $len, 0x7d, scalar(@$chal_p), @$chal_p);
+  my @apdu = (0x00, 0xa4, 0x00, 0x01, $len, 0x7d, scalar(@$chal_p), @$chal_p);
   my $repl = send_apdu(\@apdu);
   $len = scalar(@$repl);
   my $offs = 0;
@@ -199,8 +198,7 @@ if($action eq 'calculate-all') {
     $offs += $length;
     die "error on calc all" unless $repl->[$offs++] == 0x7d;
     $length = get_len($repl, $offs++);
-    my $mod = $repl->[$offs + $length - 1] & 0xf;
-    my $code = calc_oath($repl, $mod + $offs);
+    my $code = calc_oath($repl, $offs);
     printf(": %0${digits}d", $code);
     print "\n";
     $offs += $length;
@@ -211,10 +209,9 @@ sub calc_oath {
   my $repl = shift;
   my $offs = shift;
 
-  my $code = (($repl->[$offs++] & 0x7f) << 24) |
-    (($repl->[$offs++] & 0xff) << 16) |
-    (($repl->[$offs++] & 0xff) << 8) |
-    ($repl->[$offs++] & 0xff);
+  my $ref = [@$repl[$offs..($offs + 3)]];
+
+  my $code = unpack("N", pack("C4", @$ref));
   return $code % (10 ** $digits);
 }
 

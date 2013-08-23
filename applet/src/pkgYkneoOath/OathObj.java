@@ -7,6 +7,8 @@ package pkgYkneoOath;
 
 import javacard.framework.ISO7816;
 import javacard.framework.ISOException;
+import javacard.framework.JCSystem;
+import javacard.framework.SystemException;
 import javacard.framework.Util;
 import javacard.security.MessageDigest;
 
@@ -36,9 +38,15 @@ public class OathObj {
 	private short lastOffs;
 	private byte props;
 	
+	private static byte[] scratchBuf;
+	
 	public OathObj() {
 		inner = new byte[hmac_buf_size];
 		outer = new byte[hmac_buf_size];
+		
+		if(scratchBuf == null) {
+			scratchBuf = JCSystem.makeTransientByteArray((short) 128, JCSystem.CLEAR_ON_DESELECT);
+		}
 	}
 	
 	public void setKey(byte[] buf, short offs, byte type, short len) {
@@ -177,5 +185,16 @@ public class OathObj {
 		digest.reset();
 		digest.update(outer, _0, hmac_buf_size);
 		return digest.doFinal(dest, destOffs, digestLen, dest, destOffs);
+	}
+	
+	public short calculateTruncated(byte[] chal, short chalOffs, short len,
+			byte[] dest, short destOffs) {
+		short length = calculate(chal, chalOffs, len, scratchBuf, _0);
+		short offs = (short) (scratchBuf[(short)(length - 1)] & 0xf);
+		dest[destOffs++] = (byte) (scratchBuf[offs++] & 0x7f);
+		dest[destOffs++] = scratchBuf[offs++];
+		dest[destOffs++] = scratchBuf[offs++];
+		dest[destOffs++] = scratchBuf[offs++];
+		return 4;
 	}
 }

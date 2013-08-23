@@ -93,8 +93,8 @@ public class YkneoOath extends Applet {
 			}
 			break;
 		case (byte)0xa2: // calculate
-			if(p1p2 == 0x0000) {
-				sendLen = handleCalc(buf);
+			if(p1 == 0x00 && (p2 == 0x00 || p2 == 0x01)) {
+				sendLen = handleCalc(buf, p2);
 			} else {
 				ISOException.throwIt(ISO7816.SW_WRONG_P1P2);
 			}
@@ -107,8 +107,8 @@ public class YkneoOath extends Applet {
 			}
 			break;
 		case (byte)0xa4: // calculate all codes
-			if(p1p2 == 0x0000) {
-				sendLen = handleCalcAll(buf);
+			if(p1 == 0x00 && (p2 == 0x00 || p2 == 0x01)) {
+				sendLen = handleCalcAll(buf, p2);
 			} else {
 				ISOException.throwIt(ISO7816.SW_WRONG_P1P2);
 			}
@@ -189,7 +189,7 @@ public class YkneoOath extends Applet {
 		}
 	}
 
-	private short handleCalc(byte[] buf) {
+	private short handleCalc(byte[] buf, byte p2) {
 		short offs = 5;
 		if(buf[offs++] != 0x7a) {
 			ISOException.throwIt(ISO7816.SW_WRONG_DATA);
@@ -207,7 +207,11 @@ public class YkneoOath extends Applet {
 		}
 		len = getLength(buf, offs);
 		offs += getLengthBytes(len);
-		len = object.calculate(buf, offs, len, tempBuf, _0);
+		if(p2 == 0x00) {
+			len = object.calculate(buf, offs, len, tempBuf, _0);
+		} else {
+			len = object.calculateTruncated(buf, offs, len, tempBuf, _0);
+		}
 		
 		offs = 0;
 		buf[offs++] = 0x7d;
@@ -217,7 +221,7 @@ public class YkneoOath extends Applet {
 		return (short) (len + getLengthBytes(len) + 1);
 	}
 	
-	private short handleCalcAll(byte[] buf) {
+	private short handleCalcAll(byte[] buf, byte p2) {
 		short offs = 5;
 		if(buf[offs++] != 0x7d) {
 			ISOException.throwIt(ISO7816.SW_WRONG_DATA);
@@ -232,7 +236,12 @@ public class YkneoOath extends Applet {
 			buf[offs++] = (byte) obj.getNameLength();
 			offs += obj.getName(buf, offs);
 			buf[offs++] = 0x7d;
-			short len = obj.calculate(tempBuf, _0, chalLen, buf, (short) (offs + 1));
+			short len;
+			if(p2 == 0x00) {
+				len = obj.calculate(tempBuf, _0, chalLen, buf, (short) (offs + 1));
+			} else {
+				len = obj.calculateTruncated(tempBuf, _0, chalLen, buf, (short) (offs + 1));
+			}
 			buf[offs++] = (byte) len;
 			offs += len;
 			obj = obj.nextObject;
