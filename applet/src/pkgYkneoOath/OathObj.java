@@ -8,7 +8,6 @@ package pkgYkneoOath;
 import javacard.framework.ISO7816;
 import javacard.framework.ISOException;
 import javacard.framework.JCSystem;
-import javacard.framework.SystemException;
 import javacard.framework.Util;
 import javacard.security.MessageDigest;
 
@@ -33,6 +32,7 @@ public class OathObj {
 	private byte[] outer;
 	private static MessageDigest sha;
 	private static MessageDigest sha256;
+	private MessageDigest digest;
 	
 	private byte[] lastChal;
 	private short lastOffs;
@@ -56,10 +56,16 @@ public class OathObj {
 		if(len > hmac_buf_size) {
 			ISOException.throwIt(ISO7816.SW_WRONG_DATA);
 		}
-		if(type == HMAC_SHA1 && sha == null) {
-			sha = MessageDigest.getInstance(MessageDigest.ALG_SHA, false);
-		} else if(type == HMAC_SHA256 && sha256 == null) {
-			sha256 = MessageDigest.getInstance(MessageDigest.ALG_SHA_256, false);
+		if(type == HMAC_SHA1) {
+			if(sha == null) {
+				sha = MessageDigest.getInstance(MessageDigest.ALG_SHA, false);
+			}
+			digest = sha;
+		} else if(type == HMAC_SHA256) {
+			if(sha256 == null) {
+				sha256 = MessageDigest.getInstance(MessageDigest.ALG_SHA_256, false);
+			}
+			digest = sha256;
 		}
 		
 		this.type = type;
@@ -144,13 +150,6 @@ public class OathObj {
 
 	public short calculate(byte[] chal, short chalOffs, short len, byte[] dest,
 			short destOffs) {
-		MessageDigest digest = null;
-		if(type == HMAC_SHA1) {
-			digest = sha;
-		} else if(type == HMAC_SHA256) {
-			digest = sha256;
-		}
-		
 		if(len > hmac_buf_size || len == 0) {
 			ISOException.throwIt(ISO7816.SW_WRONG_DATA);
 		}
@@ -196,5 +195,9 @@ public class OathObj {
 		dest[destOffs++] = scratchBuf[offs++];
 		dest[destOffs++] = scratchBuf[offs++];
 		return 4;
+	}
+	
+	public short getDigestLength() {
+		return digest.getLength();
 	}
 }
