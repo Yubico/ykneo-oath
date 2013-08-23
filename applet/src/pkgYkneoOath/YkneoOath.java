@@ -176,6 +176,7 @@ public class YkneoOath extends Applet {
 	}
 
 	private void handleChangeCode(byte[] buf) {
+		boolean dirty = false;
 		short offs = 5;
 		if(buf[offs++] != 0x7b) {
 			ISOException.throwIt(ISO7816.SW_WRONG_DATA);
@@ -183,16 +184,47 @@ public class YkneoOath extends Applet {
 		byte type = buf[offs++];
 		short len = getLength(buf, offs);
 		offs += getLengthBytes(len);
+		if(authObj != null) {
+			dirty = true;
+		}
 		if(len == 0) {
 			authObj = null;
-			JCSystem.requestObjectDeletion();
 		} else {
-			if(authObj == null) {
-				authObj = new OathObj();
-				rng.generateData(tempBuf, _0, (short) 8);
-				authObj.setName(tempBuf, _0, (short)8);
+			OathObj updateAuthObj = new OathObj();
+			if(authObj != null) {
+				authObj.getName(tempBuf, _0);
+			} else {
+				rng.generateData(tempBuf, _0, CHALLENGE_LENGTH);
 			}
-			authObj.setKey(buf, offs, type, len);
+			updateAuthObj.setName(tempBuf, _0, CHALLENGE_LENGTH);
+			updateAuthObj.setKey(buf, offs, type, len);
+			offs += len;
+			
+			if(buf[offs++] != 0x7c) {
+				ISOException.throwIt(ISO7816.SW_WRONG_DATA);
+			}
+			len = getLength(buf, offs);
+			offs += getLengthBytes(len);
+			short respLen = updateAuthObj.calculate(buf, offs, len, tempBuf, _0);
+			offs += len;
+			if(buf[offs++] != 0x7d) {
+				ISOException.throwIt(ISO7816.SW_WRONG_DATA);
+			}
+			len = getLength(buf, offs);
+			offs += getLengthBytes(len);
+			if(len != respLen) {
+				ISOException.throwIt(ISO7816.SW_WRONG_DATA);
+			}
+			if(Util.arrayCompare(buf, offs, tempBuf, _0, len) == 0) {
+				authObj = updateAuthObj;
+			} else {
+				ISOException.throwIt(ISO7816.SW_DATA_INVALID);
+			}
+			
+			updateAuthObj = null;
+		}
+		if(dirty) {
+			JCSystem.requestObjectDeletion();
 		}
 	}
 
