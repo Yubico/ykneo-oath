@@ -182,10 +182,10 @@ public class YkneoOath extends Applet {
 		} else {
 			if(authObj == null) {
 				authObj = new OathObj();
+				rng.generateData(tempBuf, _0, (short) 8);
+				authObj.setName(tempBuf, _0, (short)8);
 			}
 			authObj.setKey(buf, offs, type, len);
-			rng.generateData(tempBuf, _0, (short) 8);
-			authObj.setName(tempBuf, _0, (short)8);
 		}
 	}
 
