@@ -38,12 +38,21 @@ public class YkneoOath extends Applet {
 
 	public void process(APDU apdu) {
 		if (selectingApplet()) {
+			// if the authObj is set respond with our name and an initial challenge
 			if(authObj != null) {
 				byte[] buf = apdu.getBuffer();
-				buf[0] = 0x7a;
-				buf[1] = (byte) authObj.getNameLength();
-				authObj.getName(buf, (short) 2);
-				apdu.setOutgoingAndSend(_0, (short) (buf[1] + 2));
+				short offs = 0;
+				buf[offs++] = 0x7a;
+				short nameLen = authObj.getNameLength();
+				buf[offs++] = (byte) nameLen;
+				authObj.getName(buf, offs);
+				offs += nameLen;
+				buf[offs++] = 0x7f;
+				buf[offs++] = CHALLENGE_LENGTH;
+				rng.generateData(buf, offs, CHALLENGE_LENGTH);
+				authObj.calculate(buf, offs, CHALLENGE_LENGTH, tempBuf, _0);
+				offs += CHALLENGE_LENGTH;
+				apdu.setOutgoingAndSend(_0, offs);
 			}
 			return;
 		}
@@ -136,32 +145,30 @@ public class YkneoOath extends Applet {
 		short offs = 5;
 		byte ins = buf[offs++];
 		short len = getLength(buf, offs);
-		if(len < 8) {
+		// make sure we're getting as long input as we expect
+		if(len != authObj.getDigestLength()) {
 			ISOException.throwIt(ISO7816.SW_WRONG_DATA);
 		}
 		offs += getLengthBytes(len);
-		if(authState[0] == 0  && ins == 0x7e) {
-			authState[0] = 1;
-			short respLen =  authObj.calculate(buf, offs, len, tempBuf, _0);
-			buf[0] = 0x7e;
-			buf[1] = (byte) (respLen + 6 + CHALLENGE_LENGTH);
-			buf[2] = 0x7d;
-			buf[3] = (byte) respLen;
-			Util.arrayCopyNonAtomic(tempBuf, _0, buf, (short) 4, respLen);
-			offs = (short) (respLen + 4);
-			buf[offs++] = 0x7f;
-			buf[offs++] = CHALLENGE_LENGTH;
-			rng.generateData(buf, offs, CHALLENGE_LENGTH);
-			authObj.calculate(buf, offs, CHALLENGE_LENGTH, tempBuf, _0);
-			offs += CHALLENGE_LENGTH;
-			return offs;
-		} else if(authState[0] == 1 && ins == 0x7f) {
+		if(authState[0] == 0  && ins == 0x7f) {
 			if(Util.arrayCompare(buf, offs, tempBuf, _0, len) == 0) {
 				authState[1] = 1;
-				return 0;
 			} else {
 				ISOException.throwIt(ISO7816.SW_WRONG_DATA);
 			}
+			offs += len;
+			ins = buf[offs++];
+			len = getLength(buf, offs);
+			// don't accept a challenge shorter than 8 bytes
+			if(len < 8) {
+				ISOException.throwIt(ISO7816.SW_WRONG_DATA);
+			}
+			offs += getLengthBytes(len);
+			short respLen =  authObj.calculate(buf, offs, len, tempBuf, _0);
+			buf[0] = 0x7d;
+			buf[1] = (byte) respLen;
+			Util.arrayCopyNonAtomic(tempBuf, _0, buf, (short) 2, respLen);
+			return (short) (respLen + 2);
 		} else {
 			ISOException.throwIt(ISO7816.SW_WRONG_DATA);
 		}
