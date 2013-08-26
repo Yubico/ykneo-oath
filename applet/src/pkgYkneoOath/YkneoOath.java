@@ -254,6 +254,7 @@ public class YkneoOath extends Applet {
 		
 		offs = 0;
 		buf[offs++] = 0x7d;
+		buf[offs++] = object.getDigits();
 		offs += setLength(buf, offs, len);
 		Util.arrayCopy(tempBuf, _0, buf, offs, len);
 		
@@ -275,6 +276,7 @@ public class YkneoOath extends Applet {
 			buf[offs++] = (byte) obj.getNameLength();
 			offs += obj.getName(buf, offs);
 			buf[offs++] = 0x7d;
+			buf[offs++] = obj.getDigits();
 			short len;
 			if(p2 == 0x00) {
 				len = obj.calculate(tempBuf, _0, chalLen, buf, (short) (offs + 1));
@@ -344,6 +346,8 @@ public class YkneoOath extends Applet {
 		if(keyType != OathObj.HMAC_SHA1 && keyType != OathObj.HMAC_SHA256) {
 			ISOException.throwIt(ISO7816.SW_WRONG_DATA);
 		}
+		byte digits = buf[offs++];
+		object.setDigits(digits);
 		len = getLength(buf, offs);
 		offs += getLengthBytes(len);
 		object.setKey(buf, offs, keyType, len);
@@ -354,6 +358,7 @@ public class YkneoOath extends Applet {
 		} else {
 			object.setProp((byte) 0);
 		}
+
 		
 		object.addObject();
 	}

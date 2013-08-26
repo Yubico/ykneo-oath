@@ -27,6 +27,7 @@ public class OathObj {
 	
 	private byte[] name;
 	public byte type;
+	private byte digits;
 
 	private byte[] inner;
 	private byte[] outer;
@@ -75,6 +76,14 @@ public class OathObj {
             inner[i] = (byte) (buf[offs] ^ 0x36);
             outer[i] = (byte) (buf[offs] ^ 0x5c);
         }
+	}
+	
+	public void setDigits(byte digits) {
+		this.digits = digits;
+	}
+	
+	public byte getDigits() {
+		return digits;
 	}
 	
 	public void setName(byte[] buf, short offs, short len) {
