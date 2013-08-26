@@ -277,14 +277,18 @@ public class YkneoOath extends Applet {
 			offs += obj.getName(buf, offs);
 			buf[offs++] = 0x7d;
 			buf[offs++] = obj.getDigits();
-			short len;
-			if(p2 == 0x00) {
-				len = obj.calculate(tempBuf, _0, chalLen, buf, (short) (offs + 1));
+			if((obj.getType() & OathObj.OATH_MASK) == OathObj.TOTP_TYPE) {
+				short len;
+				if(p2 == 0x00) {
+					len = obj.calculate(tempBuf, _0, chalLen, buf, (short) (offs + 1));
+				} else {
+					len = obj.calculateTruncated(tempBuf, _0, chalLen, buf, (short) (offs + 1));
+				}
+				buf[offs++] = (byte) len;
+				offs += len;
 			} else {
-				len = obj.calculateTruncated(tempBuf, _0, chalLen, buf, (short) (offs + 1));
+				buf[offs++] = (byte) 0xff;
 			}
-			buf[offs++] = (byte) len;
-			offs += len;
 			obj = obj.nextObject;
 		}
 		return offs;
