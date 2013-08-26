@@ -5,7 +5,13 @@ package pkgYkneoOathTest;
  * All rights reserved.
  */
 
+import java.security.InvalidKeyException;
+import java.security.Key;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 
 import javacard.framework.APDU;
 
@@ -136,7 +142,7 @@ public class YkneoOathTest {
 	}
 	
 	@Test
-	public void testSetAuth() {
+	public void testAuth() {
 		byte[] buf = new byte[256];
 		byte[] key = new byte[] {'k', 'a', 'k', 'a', ' ', 'b', 'l', 'a', 'h', 'o', 'n', 'g', 'a'};
 		byte[] chal = new byte[] {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08};
@@ -158,5 +164,49 @@ public class YkneoOathTest {
 		
 		APDU apdu = new APDU(buf);
 		ykneoOath.process(apdu);
+		
+		Arrays.fill(buf, (byte)0);
+		ykneoOath.mockSelectApplet(true);
+		ykneoOath.process(apdu);
+		offs = 10;
+		assertEquals(0x7f, buf[offs++]);
+		assertEquals(0x08, buf[offs++]);
+		byte[] data = new byte[8];
+		System.arraycopy(buf, offs, data, 0, 8);
+		byte[] resp2 = hmacSha1(key, data);
+		
+		Arrays.fill(buf, (byte)0);
+		buf[1] = (byte) 0xa3;
+		offs = 5;
+		buf[offs++] = 0x7f;
+		buf[offs++] = (byte) resp2.length;
+		System.arraycopy(resp2, 0, buf, offs, resp2.length);
+		offs += resp2.length;
+		buf[offs++] = 0x7c;
+		buf[offs++] = (byte) chal.length;
+		System.arraycopy(chal, 0, buf, offs, chal.length);
+		ykneoOath.process(apdu);
+	}
+	
+	private static byte[] hmacSha1(byte[] key, byte[] data) {
+		byte[] ret = null;
+        try {
+            Key signingKey = new SecretKeySpec(key, "HmacSHA1");
+			Mac mac = Mac.getInstance("HmacSHA1");
+	        mac.init(signingKey);
+	        ret = mac.doFinal(data);
+		} catch (NoSuchAlgorithmException | InvalidKeyException e) {
+			fail(e.getMessage());
+		}
+        return ret;
+	}
+	
+	@SuppressWarnings("unused")
+	private void dumpArray(byte[] buf) {
+		String out = "";
+		for(byte b : buf) {
+			out += String.format("%02x ", b);
+		}
+		System.out.println(out);
 	}
 }

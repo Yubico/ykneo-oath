@@ -54,4 +54,8 @@ public class MessageDigest {
 		}
     	return 0;
     }
+    
+    public byte getLength() {
+    	return (byte) digest.getDigestLength();
+    }
 }
