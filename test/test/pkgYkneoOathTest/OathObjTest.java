@@ -8,8 +8,10 @@ package pkgYkneoOathTest;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javacard.framework.ISOException;
@@ -267,6 +269,33 @@ public class OathObjTest {
 				challenge += String.format("0x%02x ", c);
 			}
 			assertArrayEquals("challenge: " + challenge, challengeMap.get(chal), result);
+		}
+	}
+	
+	// HOTP test vectors from rfc 4226
+	@Test
+	public void TestHotp() {
+		byte[] key = "12345678901234567890".getBytes();
+		List<byte[]> expecteds = new ArrayList<byte[]>();
+		expecteds.add(new byte[] {0x4c, (byte) 0x93, (byte) 0xcf, 0x18});
+		expecteds.add(new byte[] {0x41, 0x39, 0x7e, (byte) 0xea});
+		expecteds.add(new byte[] {0x8, 0x2f, (byte) 0xef, 0x30});
+		expecteds.add(new byte[] {0x66, (byte) 0xef, 0x76, 0x55});
+		expecteds.add(new byte[] {0x61, (byte) 0xc5, (byte) 0x93, (byte) 0x8a});
+		expecteds.add(new byte[] {0x33, (byte) 0xc0, (byte) 0x83, (byte) 0xd4});
+		expecteds.add(new byte[] {0x72, 0x56, (byte) 0xc0, 0x32});
+		expecteds.add(new byte[] {0x4, (byte) 0xe5, (byte) 0xb3, (byte) 0x97});
+		expecteds.add(new byte[] {0x28, 0x23, 0x44, 0x3f});
+		expecteds.add(new byte[] {0x26, 0x79, (byte) 0xdc, 0x69});
+
+		OathObj obj = new OathObj();
+		obj.setKey(key, (short)0, (byte)(OathObj.HOTP_TYPE | OathObj.HMAC_SHA1), (short) key.length);
+		
+		for(int i = 0; i < 10; i++) {
+			byte[] result = new byte[4];
+			byte[] chal = new byte[8];
+			obj.calculateTruncated(chal, (short)0, (short) 8, result, (short)0);
+			assertArrayEquals("at number " + i, expecteds.get(i), result);
 		}
 	}
 }
