@@ -31,7 +31,7 @@ public class OathObj {
 	public OathObj nextObject;
 	
 	private byte[] name;
-	public byte type;
+	private byte type;
 	private byte digits;
 	private short counter = 0;
 
@@ -94,6 +94,10 @@ public class OathObj {
 	
 	public byte getDigits() {
 		return digits;
+	}
+	
+	public byte getType() {
+		return type;
 	}
 	
 	public void setName(byte[] buf, short offs, short len) {

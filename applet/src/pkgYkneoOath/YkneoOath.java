@@ -294,7 +294,7 @@ public class YkneoOath extends Applet {
 		short len = 0;
 		OathObj object = OathObj.firstObject;
 		while(object != null) {
-			tempBuf[len++] = object.type;
+			tempBuf[len++] = object.getType();
 			len += setLength(tempBuf, len, object.getNameLength());
 			len += object.getName(tempBuf, len);
 			object = object.nextObject;
