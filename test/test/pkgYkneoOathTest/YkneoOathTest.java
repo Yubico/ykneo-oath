@@ -134,4 +134,29 @@ public class YkneoOathTest {
 				(byte) 0xec, (byte) 0xb9, 0x09, 0x7d, 0x0b, (byte) 0x8e, (byte) 0x9a, (byte) 0xcc, 0x2f, 0x7f
 		}, calcApdu.getBuffer());
 	}
+	
+	@Test
+	public void testSetAuth() {
+		byte[] buf = new byte[256];
+		byte[] key = new byte[] {'k', 'a', 'k', 'a', ' ', 'b', 'l', 'a', 'h', 'o', 'n', 'g', 'a'};
+		byte[] chal = new byte[] {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08};
+		byte[] resp = new byte[] {0x0c, 0x42, (byte) 0x8e, (byte) 0x9c, (byte) 0xba, (byte) 0xa3, (byte) 0xb3, (byte) 0xab, 0x18, 0x53, (byte) 0xd8, 0x79, (byte) 0xb9, (byte) 0xd2, 0x26, (byte) 0xf7, (byte) 0xce, (byte) 0xcc, 0x4a, 0x7a};
+		buf[1] = 0x03;
+		int offs = 5;
+		buf[offs++] = 0x7b;
+		buf[offs++] = 1; // type
+		buf[offs++] = (byte) key.length;
+		System.arraycopy(key, 0, buf, offs, key.length);
+		offs += key.length;
+		buf[offs++] = 0x7c;
+		buf[offs++] = (byte) chal.length;
+		System.arraycopy(chal, 0, buf, offs, chal.length);
+		offs += chal.length;
+		buf[offs++] = 0x7d;
+		buf[offs++] = (byte) resp.length;
+		System.arraycopy(resp, 0, buf, offs, resp.length);
+		
+		APDU apdu = new APDU(buf);
+		ykneoOath.process(apdu);
+	}
 }
