@@ -57,14 +57,14 @@ public class YkneoOathTest {
 		APDU putApdu = new APDU(new byte[] {
 				0x00, 0x01, 0x00, 0x00, 0x1d,
 				0x7a, 0x04, 'k', 'a', 'k', 'a',
-				0x7b, 0x01, 0x06, 0x14, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b
+				0x7b, 0x21, 0x06, 0x14, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b
 		});
 		assertNull(OathObj.firstObject);
 		ykneoOath.process(putApdu);
 		assertNotNull(OathObj.firstObject);
 		ykneoOath.process(listApdu);
 		byte[] expect = new byte[256];
-		System.arraycopy(new byte[] {(byte) 0xa1, 6, 1, 4, 'k', 'a', 'k', 'a'}, 0, expect, 0, 8);
+		System.arraycopy(new byte[] {(byte) 0xa1, 6, 0x21, 4, 'k', 'a', 'k', 'a'}, 0, expect, 0, 8);
 		assertArrayEquals(expect, listApdu.getBuffer());
 		
 		APDU calcApdu = new APDU(new byte[] {
@@ -91,7 +91,7 @@ public class YkneoOathTest {
 		APDU putApdu = new APDU(new byte[] {
 			0x00, 0x01, 0x00, 0x00, 0x1f,
 			0x7a, 0x04, 'k', 'a', 'k', 'a',
-			0x7b, 0x01, 0x06, 0x14, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b,
+			0x7b, 0x21, 0x06, 0x14, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b,
 			0x7c, 0x01
 		});
 
@@ -101,7 +101,7 @@ public class YkneoOathTest {
 		assertNull(OathObj.firstObject.nextObject);
 		ykneoOath.process(listApdu);
 		byte[] expect = new byte[256];
-		System.arraycopy(new byte[] {(byte) 0xa1, 6, 1, 4, 'k', 'a', 'k', 'a'}, 0, expect, 0, 8);
+		System.arraycopy(new byte[] {(byte) 0xa1, 6, 0x21, 4, 'k', 'a', 'k', 'a'}, 0, expect, 0, 8);
 		assertArrayEquals(expect, listApdu.getBuffer());
 
 		APDU calcApdu = new APDU(new byte[] {
@@ -125,7 +125,7 @@ public class YkneoOathTest {
 		Arrays.fill(buf, (byte)0x00);
 		buf[1] = (byte)0xa1;
 		ykneoOath.process(listApdu);
-		System.arraycopy(new byte[] {(byte) 0xa1, 6, 1, 4, 'k', 'a', 'k', 'a'}, 0, expect, 0, 8);
+		System.arraycopy(new byte[] {(byte) 0xa1, 6, 0x21, 4, 'k', 'a', 'k', 'a'}, 0, expect, 0, 8);
 		assertArrayEquals(expect, listApdu.getBuffer());
 		
 		calcApdu = new APDU(new byte[] {
@@ -150,7 +150,7 @@ public class YkneoOathTest {
 		buf[1] = 0x03;
 		int offs = 5;
 		buf[offs++] = 0x7b;
-		buf[offs++] = 1; // type
+		buf[offs++] = OathObj.HMAC_SHA1 | OathObj.TOTP_TYPE; // type
 		buf[offs++] = (byte) key.length;
 		System.arraycopy(key, 0, buf, offs, key.length);
 		offs += key.length;
