@@ -25,11 +25,16 @@ public class YkneoOath extends Applet {
 	private byte[] authState;
 	
 	private RandomData rng;
+	
+	private byte[] identity;
 
 	public YkneoOath() {
 		tempBuf = JCSystem.makeTransientByteArray((short) 512, JCSystem.CLEAR_ON_DESELECT);
 		authState = JCSystem.makeTransientByteArray((short)2, JCSystem.CLEAR_ON_DESELECT);
 		rng = RandomData.getInstance(RandomData.ALG_PSEUDO_RANDOM);
+		
+		identity = new byte[CHALLENGE_LENGTH];
+		rng.generateData(identity, _0, CHALLENGE_LENGTH);
 	}
 
 	public static void install(byte[] bArray, short bOffset, byte bLength) {
@@ -38,22 +43,23 @@ public class YkneoOath extends Applet {
 
 	public void process(APDU apdu) {
 		if (selectingApplet()) {
-			// if the authObj is set respond with our name and an initial challenge
+			byte[] buf = apdu.getBuffer();
+			short offs = 0;
+			buf[offs++] = 0x7a;
+			short nameLen = (short) identity.length;
+			buf[offs++] = (byte) nameLen;
+			Util.arrayCopyNonAtomic(identity, _0, buf, offs, nameLen);
+			offs += nameLen;
+
+			// if the authobj is set add a challenge
 			if(authObj != null) {
-				byte[] buf = apdu.getBuffer();
-				short offs = 0;
-				buf[offs++] = 0x7a;
-				short nameLen = authObj.getNameLength();
-				buf[offs++] = (byte) nameLen;
-				authObj.getName(buf, offs);
-				offs += nameLen;
 				buf[offs++] = 0x7f;
 				buf[offs++] = CHALLENGE_LENGTH;
 				rng.generateData(buf, offs, CHALLENGE_LENGTH);
 				authObj.calculate(buf, offs, CHALLENGE_LENGTH, tempBuf, _0);
 				offs += CHALLENGE_LENGTH;
-				apdu.setOutgoingAndSend(_0, offs);
 			}
+			apdu.setOutgoingAndSend(_0, offs);
 			return;
 		}
 
@@ -191,12 +197,6 @@ public class YkneoOath extends Applet {
 			authObj = null;
 		} else {
 			OathObj updateAuthObj = new OathObj();
-			if(authObj != null) {
-				authObj.getName(tempBuf, _0);
-			} else {
-				rng.generateData(tempBuf, _0, CHALLENGE_LENGTH);
-			}
-			updateAuthObj.setName(tempBuf, _0, CHALLENGE_LENGTH);
 			updateAuthObj.setKey(buf, offs, type, len);
 			offs += len;
 			
