@@ -6,8 +6,15 @@ package javacard.framework;
  */
 
 public abstract class Applet {
+	private boolean selecting = false;
 	
     protected boolean selectingApplet() {
-    	return false;
+    	boolean state = selecting;
+    	selecting = false;
+    	return state;
+    }
+    
+    public void mockSelectApplet(boolean select) {
+    	selecting = select;
     }
 }
