@@ -343,7 +343,10 @@ public class YkneoOath extends Applet {
 			ISOException.throwIt(ISO7816.SW_WRONG_DATA);
 		}
 		byte keyType = buf[offs++];
-		if(keyType != OathObj.HMAC_SHA1 && keyType != OathObj.HMAC_SHA256) {
+		if((keyType & OathObj.HMAC_MASK) != OathObj.HMAC_SHA1 && (keyType & OathObj.HMAC_MASK) != OathObj.HMAC_SHA256) {
+			ISOException.throwIt(ISO7816.SW_WRONG_DATA);
+		}
+		if((keyType & OathObj.OATH_MASK) != OathObj.TOTP_TYPE && (keyType & OathObj.OATH_MASK) != OathObj.HOTP_TYPE) {
 			ISOException.throwIt(ISO7816.SW_WRONG_DATA);
 		}
 		byte digits = buf[offs++];

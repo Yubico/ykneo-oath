@@ -12,8 +12,13 @@ import javacard.framework.Util;
 import javacard.security.MessageDigest;
 
 public class OathObj {
+	public static final byte HMAC_MASK = 0x0f;
 	public static final byte HMAC_SHA1 = 0x01;
 	public static final byte HMAC_SHA256 = 0x02;
+	
+	public static final byte OATH_MASK = (byte) 0xf0;
+	public static final byte HOTP_TYPE = 0x10;
+	public static final byte TOTP_TYPE = 0x20;
 	
 	public static final byte PROP_ALWAYS_INCREASING = 1 << 0;
 	
@@ -28,6 +33,7 @@ public class OathObj {
 	private byte[] name;
 	public byte type;
 	private byte digits;
+	private short counter = 0;
 
 	private byte[] inner;
 	private byte[] outer;
@@ -51,18 +57,21 @@ public class OathObj {
 	}
 	
 	public void setKey(byte[] buf, short offs, byte type, short len) {
-		if(type != HMAC_SHA1 && type != HMAC_SHA256) {
+		if((type & HMAC_MASK) != HMAC_SHA1 && (type & HMAC_MASK) != HMAC_SHA256) {
+			ISOException.throwIt(ISO7816.SW_DATA_INVALID);
+		}
+		if((type & OATH_MASK) != HOTP_TYPE && (type & OATH_MASK) != TOTP_TYPE) {
 			ISOException.throwIt(ISO7816.SW_DATA_INVALID);
 		}
 		if(len > hmac_buf_size) {
 			ISOException.throwIt(ISO7816.SW_WRONG_DATA);
 		}
-		if(type == HMAC_SHA1) {
+		if((type & HMAC_MASK) == HMAC_SHA1) {
 			if(sha == null) {
 				sha = MessageDigest.getInstance(MessageDigest.ALG_SHA, false);
 			}
 			digest = sha;
-		} else if(type == HMAC_SHA256) {
+		} else if((type & HMAC_MASK) == HMAC_SHA256) {
 			if(sha256 == null) {
 				sha256 = MessageDigest.getInstance(MessageDigest.ALG_SHA_256, false);
 			}
@@ -70,6 +79,7 @@ public class OathObj {
 		}
 		
 		this.type = type;
+		this.counter = 0;
 		Util.arrayFillNonAtomic(inner, _0, hmac_buf_size, (byte) 0x36);
 		Util.arrayFillNonAtomic(outer, _0, hmac_buf_size, (byte) 0x5c);
         for (short i = 0; i < len; i++, offs++) {
@@ -162,33 +172,44 @@ public class OathObj {
 		if(len > hmac_buf_size || len == 0) {
 			ISOException.throwIt(ISO7816.SW_WRONG_DATA);
 		}
+		byte[] buf = null;
 		
-		if((props & PROP_ALWAYS_INCREASING) == PROP_ALWAYS_INCREASING) {
-			short thisOffs = (short) (hmac_buf_size - len);
-			short i = lastOffs < thisOffs ? lastOffs : thisOffs;
-			for(; i < hmac_buf_size; i++) {
-				if(i < thisOffs) {
-					if(lastChal[i] == 0) {
-						continue;
+		if((type & OATH_MASK) == TOTP_TYPE) {
+			if((props & PROP_ALWAYS_INCREASING) == PROP_ALWAYS_INCREASING) {
+				short thisOffs = (short) (hmac_buf_size - len);
+				short i = lastOffs < thisOffs ? lastOffs : thisOffs;
+				for(; i < hmac_buf_size; i++) {
+					if(i < thisOffs) {
+						if(lastChal[i] == 0) {
+							continue;
+						} else {
+							ISOException.throwIt(ISO7816.SW_SECURITY_STATUS_NOT_SATISFIED);
+						}
 					} else {
-						ISOException.throwIt(ISO7816.SW_SECURITY_STATUS_NOT_SATISFIED);
+						break;
 					}
-				} else {
-					break;
 				}
+				short offs = (short) (i - thisOffs + chalOffs);
+				byte compRes = Util.arrayCompare(chal, offs, lastChal, i, len);
+				if(compRes == -1) {
+					ISOException.throwIt(ISO7816.SW_SECURITY_STATUS_NOT_SATISFIED);
+				}
+				lastOffs = thisOffs;
+				Util.arrayCopy(chal, chalOffs, lastChal, thisOffs, len);
 			}
-			short offs = (short) (i - thisOffs + chalOffs);
-			byte compRes = Util.arrayCompare(chal, offs, lastChal, i, len);
-			if(compRes == -1) {
-				ISOException.throwIt(ISO7816.SW_SECURITY_STATUS_NOT_SATISFIED);
-			}
-			lastOffs = thisOffs;
-			Util.arrayCopy(chal, chalOffs, lastChal, thisOffs, len);
+			buf = chal;
+		} else if((type & OATH_MASK) == HOTP_TYPE) {
+			Util.arrayFillNonAtomic(scratchBuf, _0, (short)8, (byte)0);
+			Util.setShort(scratchBuf, (short) 6, counter++);
+			buf = scratchBuf;
+			chalOffs = 0;
+		} else {
+			ISOException.throwIt(ISO7816.SW_DATA_INVALID);
 		}
 		
 		digest.reset();
 		digest.update(inner, _0, hmac_buf_size);
-		short digestLen = digest.doFinal(chal, chalOffs, len, dest, destOffs);
+		short digestLen = digest.doFinal(buf, chalOffs, len, dest, destOffs);
 		
 		digest.reset();
 		digest.update(outer, _0, hmac_buf_size);
