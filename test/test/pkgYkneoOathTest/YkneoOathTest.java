@@ -188,6 +188,77 @@ public class YkneoOathTest {
 		ykneoOath.process(apdu);
 	}
 	
+	@Test
+	public void testBothOath() {
+		byte[] key = new byte[] {'f', 'o', 'o', ' ', 'b', 'a', 'r'};
+		byte[] totpName = new byte[] {'t', 'o', 't', 'p'};
+		byte[] hotpName = new byte[] {'h', 'o', 't', 'p'};
+		byte[] buf = new byte[256];
+		byte digits = 6;
+		buf[1] = 0x01;
+		int offs = 5;
+		buf[offs++] = 0x7a;
+		buf[offs++] = (byte) totpName.length;
+		System.arraycopy(totpName, 0, buf, offs, totpName.length);
+		offs += totpName.length;
+		buf[offs++] = 0x7b;
+		buf[offs++] = OathObj.TOTP_TYPE | OathObj.HMAC_SHA1;
+		buf[offs++] = digits;
+		buf[offs++] = (byte) key.length;
+		System.arraycopy(key, 0, buf, offs, key.length);
+		offs += key.length;
+		APDU apdu = new APDU(buf);
+		ykneoOath.process(apdu);
+		buf[7] = 'h';
+		buf[12] = OathObj.HOTP_TYPE | OathObj.HMAC_SHA1;
+		ykneoOath.process(apdu);
+		
+		byte[] chal = new byte[] {0x00, 0x00, 0x00, 0x00, 0x02, (byte) 0xbc, (byte) 0xad, (byte) 0xc8};
+		byte[] resp = new byte[] {0x3d, (byte) 0xc6, (byte) 0xbf, 0x3d};
+		Arrays.fill(buf, (byte)0);
+		buf[1] = (byte) 0xa4;
+		buf[3] = 1;
+		buf[5] = 0x7d;
+		buf[6] = (byte) chal.length;
+		System.arraycopy(chal, 0, buf, 7, chal.length);
+		ykneoOath.process(apdu);
+		
+		byte[] buf2 = new byte[256];
+		offs = 0;
+		buf2[offs++] = 0x7a;
+		buf2[offs++] = (byte) totpName.length;
+		System.arraycopy(totpName, 0, buf2, offs, totpName.length);
+		offs += totpName.length;
+		buf2[offs++] = 0x7d;
+		buf2[offs++] = digits;
+		buf2[offs++] = (byte) resp.length;
+		System.arraycopy(resp, 0, buf2, offs, resp.length);
+		offs += resp.length;
+		buf2[offs++] = 0x7a;
+		buf2[offs++] = (byte) hotpName.length;
+		System.arraycopy(hotpName, 0, buf2, offs, hotpName.length);
+		offs += hotpName.length;
+		buf2[offs++] = 0x7d;
+		buf2[offs++] = digits;
+		buf2[offs++] = (byte) 0xff;
+		assertArrayEquals(buf2, buf);
+		
+		Arrays.fill(buf, (byte)0);
+		buf[1] = (byte) 0xa2;
+		buf[3] = 1;
+		offs = 5;
+		buf[offs++] = 0x7a;
+		buf[offs++] = (byte) hotpName.length;
+		System.arraycopy(hotpName, 0, buf, offs, hotpName.length);
+		offs += hotpName.length;
+		buf[offs++] = 0x7d;
+		ykneoOath.process(apdu);
+		byte[] expect = new byte[] {0x17, (byte) 0xfa, 0x2d, 0x40};
+		resp = new byte[4];
+		System.arraycopy(buf, 3, resp, 0, resp.length);
+		assertArrayEquals(expect, resp);
+	}
+	
 	private static byte[] hmacSha1(byte[] key, byte[] data) {
 		byte[] ret = null;
         try {
