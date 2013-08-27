@@ -254,8 +254,8 @@ public class YkneoOath extends Applet {
 		
 		offs = 0;
 		buf[offs++] = 0x7d;
+		offs += setLength(buf, offs, (short) (len + 1));
 		buf[offs++] = object.getDigits();
-		offs += setLength(buf, offs, len);
 		Util.arrayCopy(tempBuf, _0, buf, offs, len);
 		
 		return (short) (len + getLengthBytes(len) + 1);
@@ -276,19 +276,17 @@ public class YkneoOath extends Applet {
 			buf[offs++] = (byte) obj.getNameLength();
 			offs += obj.getName(buf, offs);
 			buf[offs++] = 0x7d;
-			buf[offs++] = obj.getDigits();
+			short len = 0;
 			if((obj.getType() & OathObj.OATH_MASK) == OathObj.TOTP_TYPE) {
-				short len;
 				if(p2 == 0x00) {
-					len = obj.calculate(tempBuf, _0, chalLen, buf, (short) (offs + 1));
+					len = obj.calculate(tempBuf, _0, chalLen, buf, (short) (offs + 2));
 				} else {
-					len = obj.calculateTruncated(tempBuf, _0, chalLen, buf, (short) (offs + 1));
+					len = obj.calculateTruncated(tempBuf, _0, chalLen, buf, (short) (offs + 2));
 				}
-				buf[offs++] = (byte) len;
-				offs += len;
-			} else {
-				buf[offs++] = (byte) 0xff;
 			}
+			buf[offs++] = (byte) (len + 1);
+			buf[offs++] = obj.getDigits();
+			offs += len;
 			obj = obj.nextObject;
 		}
 		return offs;
