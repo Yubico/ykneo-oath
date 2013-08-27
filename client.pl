@@ -288,7 +288,7 @@ client.pl [options] [action]
   -key=key        key to operate on (valid for put/change-code)
   -challenge=chal challenge to send (valid for calculate)
   -digits=[1-9]   number of digits of oath code to construct (valid for calculate)
-  -type=[1,2]     type of credential (1=HMAC-SHA1, 2=HMAC-SHA256) (valid for put)
+  -type=xx        type of credential (10=HOTP, 20=TOTP, 1=HMAC-SHA1, 2=HMAC-SHA256) (valid for put)
   -code=code      unlock-code to send
   -debug          debug mode (show all APDUs sent)
 
