@@ -173,12 +173,12 @@ public class OathObj {
 
 	public short calculate(byte[] chal, short chalOffs, short len, byte[] dest,
 			short destOffs) {
-		if(len > hmac_buf_size || len == 0) {
-			ISOException.throwIt(ISO7816.SW_WRONG_DATA);
-		}
 		byte[] buf = null;
 		
 		if((type & OATH_MASK) == TOTP_TYPE) {
+			if(len > hmac_buf_size || len == 0) {
+				ISOException.throwIt(ISO7816.SW_WRONG_DATA);
+			}
 			if((props & PROP_ALWAYS_INCREASING) == PROP_ALWAYS_INCREASING) {
 				short thisOffs = (short) (hmac_buf_size - len);
 				short i = lastOffs < thisOffs ? lastOffs : thisOffs;
@@ -207,6 +207,7 @@ public class OathObj {
 			Util.setShort(scratchBuf, (short) 6, counter++);
 			buf = scratchBuf;
 			chalOffs = 0;
+			len = 8;
 		} else {
 			ISOException.throwIt(ISO7816.SW_DATA_INVALID);
 		}
