@@ -153,7 +153,7 @@ if($action eq 'put') {
   my @name_p = unpack("C*", $name);
   my $key_p = unpack_hex($key);
   my $len = scalar(@name_p) + 2 + scalar(@$key_p) + 3;
-  my @apdu = (0x00, 0x01, 0x00, 0x00, $len, 0x7a, scalar(@name_p), @name_p, 0x7b, $type, scalar(@$key_p), @$key_p);
+  my @apdu = (0x00, 0x01, 0x00, 0x00, $len, 0x7a, scalar(@name_p), @name_p, 0x7b, $type, $digits, scalar(@$key_p), @$key_p);
   my $repl = send_apdu(\@apdu);
 }
 
