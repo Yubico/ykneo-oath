@@ -24,6 +24,15 @@ my $debug;
 my $digits = 6;
 my $help = 0;
 
+my $name_tag = 0x71;
+my $name_list_tag = 0x72;
+my $key_tag = 0x73;
+my $challenge_tag = 0x74;
+my $response_tag = 0x75;
+my $t_response_tag = 0x76;
+my $no_response_tag = 0x77;
+my $property_tag = 0x78;
+
 GetOptions("reader=s" => \$readerMatch,
            "list" => \&set_action,
            "put" => \&set_action,
@@ -71,7 +80,7 @@ if(defined($code)) {
   }
   my $chal_p = unpack_hex($challenge);
   my $len = scalar(@$chal_p) + 2;
-  my @apdu = (0x00, 0xa3, 0x00, 0x00, $len, 0x7e, $challenge_length, @$chal_p);
+  my @apdu = (0x00, 0xa3, 0x00, 0x00, $len, $challenge_tag, $challenge_length, @$chal_p);
   my $repl = send_apdu(\@apdu);
   if($repl->[0] != 0x7e) {
     die "wrong answer from server.." . $repl->[0];
@@ -120,7 +129,7 @@ if($action eq 'change-code') {
   die "No key specified." unless $key;
   my $key_p = unpack_hex($key);
   my $len = scalar(@$key_p) + 2;
-  my @apdu = (0x00, 0x03, 0x00, 0x00, $len, 0x7b, $type, scalar(@$key_p), @$key_p);
+  my @apdu = (0x00, 0x03, 0x00, 0x00, $len, $key_tag, $type, scalar(@$key_p), @$key_p);
   my $repl = send_apdu(\@apdu);
   if($repl->[0] != 0x90) {
     die "failed setting code.";
@@ -128,7 +137,7 @@ if($action eq 'change-code') {
 }
 
 if($action eq 'list') {
-  my $repl = send_apdu([0x00, 0xa1, 0x00, 0x00]);
+  my $repl = send_apdu([0x00, $name_list_tag, 0x00, 0x00]);
   if($repl->[0] != 0xa1) {
     die "unknown reply: " . $repl->[0];
   }
@@ -153,7 +162,7 @@ if($action eq 'put') {
   my @name_p = unpack("C*", $name);
   my $key_p = unpack_hex($key);
   my $len = scalar(@name_p) + 2 + scalar(@$key_p) + 3;
-  my @apdu = (0x00, 0x01, 0x00, 0x00, $len, 0x7a, scalar(@name_p), @name_p, 0x7b, $type, $digits, scalar(@$key_p), @$key_p);
+  my @apdu = (0x00, 0x01, 0x00, 0x00, $len, $name_tag, scalar(@name_p), @name_p, $key_tag, $type, $digits, scalar(@$key_p), @$key_p);
   my $repl = send_apdu(\@apdu);
 }
 
@@ -161,7 +170,7 @@ if($action eq 'delete') {
   die "No name specified." unless $name;
   my @name_p = unpack("C*", $name);
   my $len = scalar(@name_p) + 2;
-  my @apdu = (0x00, 0x02, 0x00, 0x00, $len, 0x7a, scalar(@name_p), @name_p);
+  my @apdu = (0x00, 0x02, 0x00, 0x00, $len, $name_tag, scalar(@name_p), @name_p);
   my $repl = send_apdu(\@apdu);
 }
 
@@ -172,7 +181,7 @@ if($action eq 'calculate') {
   my @name_p = unpack("C*", $name);
   my $chal_p = unpack_hex($challenge);
   my $len = scalar(@name_p) + 2 + scalar(@$chal_p) + 2;
-  my @apdu = (0x00, 0xa2, 0x00, 0x01, $len, 0x7a, scalar(@name_p), @name_p, 0x7d, scalar(@$chal_p), @$chal_p);
+  my @apdu = (0x00, 0xa2, 0x00, 0x01, $len, $name_tag, scalar(@name_p), @name_p, $challenge_tag, scalar(@$chal_p), @$chal_p);
   my $repl = send_apdu(\@apdu);
 
   die "error on calc" unless $repl->[0] == 0x7d;
@@ -185,7 +194,7 @@ if($action eq 'calculate-all') {
   die "No challenge specified." unless $challenge;
   my $chal_p = unpack_hex($challenge);
   my $len = scalar(@$chal_p) + 2;
-  my @apdu = (0x00, 0xa4, 0x00, 0x01, $len, 0x7d, scalar(@$chal_p), @$chal_p);
+  my @apdu = (0x00, 0xa4, 0x00, 0x01, $len, $challenge_tag, scalar(@$chal_p), @$chal_p);
   my $repl = send_apdu(\@apdu);
   $len = scalar(@$repl);
   my $offs = 0;
