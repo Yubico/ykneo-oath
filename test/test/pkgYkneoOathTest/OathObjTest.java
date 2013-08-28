@@ -33,21 +33,21 @@ public class OathObjTest {
 		OathObj obj = new OathObj();
 		obj.addObject();
 		assertEquals(obj, OathObj.firstObject);
-		obj.removeObject();
-		assertEquals(null, OathObj.firstObject);
+		obj.setActive(false);
+		assertEquals(false, OathObj.firstObject.isActive());
 	}
 	
 	@Test
 	public void TestAddSeveralAndRemove() {
-		OathObj first = new OathObj();
-		OathObj second = new OathObj();
-		OathObj third = new OathObj();
+		OathObj first = OathObj.getFreeObject();
 		first.setName("first".getBytes(), (short)0, (short)5);
+		first.setActive(true);
+		OathObj second = OathObj.getFreeObject();
 		second.setName("second".getBytes(), (short)0, (short)6);
+		second.setActive(true);
+		OathObj third = OathObj.getFreeObject();
 		third.setName("third".getBytes(), (short)0, (short)5);
-		first.addObject();
-		second.addObject();
-		third.addObject();
+		third.setActive(true);
 		assertEquals(first, OathObj.firstObject);
 		assertEquals(second, first.nextObject);
 		assertEquals(third, second.nextObject);
@@ -58,21 +58,6 @@ public class OathObjTest {
 		assertEquals(second, obj);
 		obj = OathObj.findObject("third".getBytes(), (short)0, (short)5);
 		assertEquals(third, obj);
-		first.removeObject();
-		assertEquals(null, first.nextObject);
-		assertEquals(second, OathObj.firstObject);
-		second.removeObject();
-		assertEquals(null, second.nextObject);
-		assertEquals(third, OathObj.firstObject);
-		second.addObject();
-		assertEquals(second, third.nextObject);
-		assertEquals(second, OathObj.lastObject);
-		third.removeObject();
-		assertEquals(null, third.nextObject);
-		assertEquals(second, OathObj.firstObject);
-		second.removeObject();
-		assertEquals(null, OathObj.firstObject);
-		assertEquals(null, OathObj.lastObject);
 	}
 	
 	@Test

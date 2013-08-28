@@ -298,6 +298,9 @@ public class YkneoOath extends Applet {
 		offs = 0;
 		OathObj obj = OathObj.firstObject;
 		while(obj != null) {
+			if(!obj.isActive()) {
+				continue;
+			}
 			buf[offs++] = NAME_TAG;
 			buf[offs++] = (byte) obj.getNameLength();
 			offs += obj.getName(buf, offs);
@@ -326,6 +329,9 @@ public class YkneoOath extends Applet {
 		short len = 0;
 		OathObj object = OathObj.firstObject;
 		while(object != null) {
+			if(!object.isActive()) {
+				continue;
+			}
 			tempBuf[len++] = object.getType();
 			len += setLength(tempBuf, len, object.getNameLength());
 			len += object.getName(tempBuf, len);
@@ -347,8 +353,7 @@ public class YkneoOath extends Applet {
 		offs += getLengthBytes(len);
 		OathObj object = OathObj.findObject(buf, offs, len);
 		if(object != null) {
-			object.removeObject();
-			JCSystem.requestObjectDeletion();
+			object.setActive(false);
 		} else {
 			ISOException.throwIt(ISO7816.SW_DATA_INVALID);
 		}
@@ -363,11 +368,11 @@ public class YkneoOath extends Applet {
 		offs += getLengthBytes(len);
 		OathObj object = OathObj.findObject(buf, offs, len);
 		if(object == null) {
-			object = new OathObj();
+			object = OathObj.getFreeObject();
 			object.setName(buf, offs, len);
 		} else {
 			// make sure we protect against tearing
-			object.removeObject();
+			object.setActive(false);
 		}
 		offs += len;
 		
@@ -393,9 +398,7 @@ public class YkneoOath extends Applet {
 		} else {
 			object.setProp((byte) 0);
 		}
-
-		
-		object.addObject();
+		object.setActive(true);
 	}
 	
 	private short getLength(byte[] buf, short offs) {

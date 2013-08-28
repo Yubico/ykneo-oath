@@ -25,12 +25,14 @@ public class OathObj {
 	private static final short _0 = 0;
 	
 	private static final byte hmac_buf_size = 64;
+	private static final short NAME_LEN = 64;
 	
 	public static OathObj firstObject;
 	public static OathObj lastObject;
 	public OathObj nextObject;
 	
 	private byte[] name;
+	private short nameLen;
 	private byte type;
 	private byte digits;
 	private short counter = 0;
@@ -102,19 +104,20 @@ public class OathObj {
 	}
 	
 	public void setName(byte[] buf, short offs, short len) {
-		if(name == null || len != name.length) {
-			name = new byte[len];
+		if(name == null) {
+			name = new byte[NAME_LEN];
 		}
+		nameLen = len;
 		Util.arrayCopy(buf, offs, name, _0, len);
 	}
 	
 	public short getName(byte[] buf, short offs) {
-		Util.arrayCopy(name, _0, buf, offs, (short) name.length);
-		return (short) name.length;
+		Util.arrayCopy(name, _0, buf, offs, (short) nameLen);
+		return (short) nameLen;
 	}
 	
 	public short getNameLength() {
-		return (short) name.length;
+		return (short) nameLen;
 	}
 	
 	public void setProp(byte props) {
@@ -139,28 +142,25 @@ public class OathObj {
 		}
 	}
 	
-	public void removeObject() {
-		if(firstObject == lastObject && firstObject == this) {
-			firstObject = lastObject = null;
-		} else if(firstObject == this) {
-			firstObject = this.nextObject;
-		} else {
-			OathObj object = firstObject;
-			while(object.nextObject != this) {
-				object = object.nextObject;
+	public static OathObj getFreeObject() {
+		OathObj object = firstObject;
+		while(object != null) {
+			if(!object.isActive()) {
+				break;
 			}
-			object.nextObject = nextObject;
-			if(lastObject == this) {
-				lastObject = object;
-			}
+			object = object.nextObject;
 		}
-		this.nextObject = null;
+		if(object == null) {
+			object = new OathObj();
+			object.addObject();
+		}
+		return object;
 	}
 	
 	public static OathObj findObject(byte[] name, short offs, short len) {
 		OathObj object = firstObject;
 		while(object != null) {
-			if(len != object.name.length) {
+			if(!object.isActive() || len != object.nameLen) {
 				object = object.nextObject;
 				continue;
 			}

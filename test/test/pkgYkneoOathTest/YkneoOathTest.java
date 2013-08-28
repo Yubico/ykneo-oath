@@ -83,7 +83,7 @@ public class YkneoOathTest {
 				0x00, YkneoOath.DELETE_INS, 0x00, 0x00, 0x06, YkneoOath.NAME_TAG, 0x04, 0x6b, 0x61, 0x6b, 0x61
 		});
 		ykneoOath.process(delApdu);
-		assertNull(OathObj.firstObject);
+		assertEquals(false, OathObj.firstObject.isActive());
 	}
 	
 	@Test
