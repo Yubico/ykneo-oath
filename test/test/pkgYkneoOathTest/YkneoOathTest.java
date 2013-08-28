@@ -57,7 +57,7 @@ public class YkneoOathTest {
 		APDU putApdu = new APDU(new byte[] {
 				0x00, YkneoOath.PUT_INS, 0x00, 0x00, 0x1d,
 				YkneoOath.NAME_TAG, 0x04, 'k', 'a', 'k', 'a',
-				YkneoOath.KEY_TAG, 0x21, 0x06, 0x14, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b
+				YkneoOath.KEY_TAG, 0x16, 0x21, 0x06, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b
 		});
 		assertNull(OathObj.firstObject);
 		ykneoOath.process(putApdu);
@@ -91,7 +91,7 @@ public class YkneoOathTest {
 		APDU putApdu = new APDU(new byte[] {
 			0x00, YkneoOath.PUT_INS, 0x00, 0x00, 0x1f,
 			YkneoOath.NAME_TAG, 0x04, 'k', 'a', 'k', 'a',
-			YkneoOath.KEY_TAG, 0x21, 0x06, 0x14, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b,
+			YkneoOath.KEY_TAG, 0x16, 0x21, 0x06, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b,
 			YkneoOath.PROPERTY_TAG, 0x01
 		});
 
@@ -150,8 +150,8 @@ public class YkneoOathTest {
 		buf[1] = YkneoOath.SET_CODE_INS;
 		int offs = 5;
 		buf[offs++] = YkneoOath.KEY_TAG;
+		buf[offs++] = (byte) (key.length + 1);
 		buf[offs++] = OathObj.HMAC_SHA1 | OathObj.TOTP_TYPE; // type
-		buf[offs++] = (byte) key.length;
 		System.arraycopy(key, 0, buf, offs, key.length);
 		offs += key.length;
 		buf[offs++] = YkneoOath.CHALLENGE_TAG;
@@ -202,15 +202,15 @@ public class YkneoOathTest {
 		System.arraycopy(totpName, 0, buf, offs, totpName.length);
 		offs += totpName.length;
 		buf[offs++] = YkneoOath.KEY_TAG;
+		buf[offs++] = (byte) (key.length + 2);
 		buf[offs++] = OathObj.TOTP_TYPE | OathObj.HMAC_SHA1;
 		buf[offs++] = digits;
-		buf[offs++] = (byte) key.length;
 		System.arraycopy(key, 0, buf, offs, key.length);
 		offs += key.length;
 		APDU apdu = new APDU(buf);
 		ykneoOath.process(apdu);
 		buf[7] = 'h';
-		buf[12] = OathObj.HOTP_TYPE | OathObj.HMAC_SHA1;
+		buf[13] = OathObj.HOTP_TYPE | OathObj.HMAC_SHA1;
 		ykneoOath.process(apdu);
 		
 		byte[] chal = new byte[] {0x00, 0x00, 0x00, 0x00, 0x02, (byte) 0xbc, (byte) 0xad, (byte) 0xc8};

@@ -217,14 +217,14 @@ public class YkneoOath extends Applet {
 		if(buf[offs++] != KEY_TAG) {
 			ISOException.throwIt(ISO7816.SW_WRONG_DATA);
 		}
-		byte type = buf[offs++];
 		short len = getLength(buf, offs);
 		offs += getLengthBytes(len);
 		if(len == 0) {
 			authObj.setActive(false);
 		} else {
-			scratchAuth.setKey(buf, offs, type, len);
-			offs += len;
+			byte type = buf[offs++];
+			scratchAuth.setKey(buf, offs, type, (short) (len - 1));
+			offs += (short)(len - 1);
 			
 			if(buf[offs++] != CHALLENGE_TAG) {
 				ISOException.throwIt(ISO7816.SW_WRONG_DATA);
@@ -379,6 +379,9 @@ public class YkneoOath extends Applet {
 		if(buf[offs++] != KEY_TAG) {
 			ISOException.throwIt(ISO7816.SW_WRONG_DATA);
 		}
+		len = getLength(buf, offs);
+		offs += getLengthBytes(len);
+		
 		byte keyType = buf[offs++];
 		if((keyType & OathObj.HMAC_MASK) != OathObj.HMAC_SHA1 && (keyType & OathObj.HMAC_MASK) != OathObj.HMAC_SHA256) {
 			ISOException.throwIt(ISO7816.SW_WRONG_DATA);
@@ -388,10 +391,9 @@ public class YkneoOath extends Applet {
 		}
 		byte digits = buf[offs++];
 		object.setDigits(digits);
-		len = getLength(buf, offs);
-		offs += getLengthBytes(len);
-		object.setKey(buf, offs, keyType, len);
-		offs += len;
+
+		object.setKey(buf, offs, keyType, (short) (len - 2));
+		offs += (short)(len - 2);
 		
 		if(offs < buf.length && buf[offs++] == PROPERTY_TAG) {
 			object.setProp(buf[offs]);
