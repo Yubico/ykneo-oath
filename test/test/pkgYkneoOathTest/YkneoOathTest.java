@@ -266,7 +266,9 @@ public class YkneoOathTest {
 			Mac mac = Mac.getInstance("HmacSHA1");
 	        mac.init(signingKey);
 	        ret = mac.doFinal(data);
-		} catch (NoSuchAlgorithmException | InvalidKeyException e) {
+		} catch (NoSuchAlgorithmException e) {
+			fail(e.getMessage());
+		} catch (InvalidKeyException e) {
 			fail(e.getMessage());
 		}
         return ret;
