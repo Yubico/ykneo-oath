@@ -27,6 +27,7 @@ public class YkneoOath extends Applet {
     public static final byte PUT_INS = 0x01;
     public static final byte DELETE_INS = 0x02;
     public static final byte SET_CODE_INS = 0x03;
+    public static final byte RESET_INS = 0x04;
 
     public static final byte LIST_INS = (byte)0xa1;
     public static final byte CALCULATE_INS = (byte)0xa2;
@@ -40,6 +41,7 @@ public class YkneoOath extends Applet {
 	private byte[] tempBuf;
 
 	private OathObj authObj;
+	private OathObj scratchAuth;
 	private byte[] authState;
 	
 	private RandomData rng;
@@ -53,6 +55,9 @@ public class YkneoOath extends Applet {
 		
 		identity = new byte[CHALLENGE_LENGTH];
 		rng.generateData(identity, _0, CHALLENGE_LENGTH);
+		
+		authObj = new OathObj();
+		scratchAuth = new OathObj();
 	}
 
 	public static void install(byte[] bArray, short bOffset, byte bLength) {
@@ -70,7 +75,7 @@ public class YkneoOath extends Applet {
 			offs += nameLen;
 
 			// if the authobj is set add a challenge
-			if(authObj != null) {
+			if(authObj.isActive()) {
 				buf[offs++] = CHALLENGE_TAG;
 				buf[offs++] = CHALLENGE_LENGTH;
 				rng.generateData(buf, offs, CHALLENGE_LENGTH);
@@ -90,7 +95,7 @@ public class YkneoOath extends Applet {
 		short p1p2 = Util.makeShort(p1, p2);
 		byte ins = buf[ISO7816.OFFSET_INS];
 		
-		if(authObj != null && ins != VALIDATE_INS) {
+		if(authObj.isActive() && ins != VALIDATE_INS) {
 			if(authState[1] != 1) {
 				ISOException.throwIt(ISO7816.SW_SECURITY_STATUS_NOT_SATISFIED);
 			}
@@ -118,6 +123,12 @@ public class YkneoOath extends Applet {
 				ISOException.throwIt(ISO7816.SW_WRONG_P1P2);
 			}
 			break;
+		case RESET_INS: // reset
+			if(p1p2 == (short)0xdead) {
+				handleReset();
+			} else {
+				ISOException.throwIt(ISO7816.SW_WRONG_P1P2);
+			}
 		case LIST_INS: // list
 			if(p1p2 == 0x0000) {
 				sendLen = handleList(buf);
@@ -156,14 +167,15 @@ public class YkneoOath extends Applet {
 	}
 
 	private void handleReset() {
-		authObj = null;
+		authObj.setActive(false);
 		OathObj.firstObject = null;
 		OathObj.lastObject = null;
+		Util.arrayFillNonAtomic(authState, _0, (short) 2, (byte)0);
 		JCSystem.requestObjectDeletion();
 	}
 
 	private short handleValidate(byte[] buf) {
-		if(authObj == null) {
+		if(!authObj.isActive()) {
 			ISOException.throwIt(ISO7816.SW_DATA_INVALID);
 		}
 		short offs = 5;
@@ -201,7 +213,6 @@ public class YkneoOath extends Applet {
 	}
 
 	private void handleChangeCode(byte[] buf) {
-		boolean dirty = false;
 		short offs = 5;
 		if(buf[offs++] != KEY_TAG) {
 			ISOException.throwIt(ISO7816.SW_WRONG_DATA);
@@ -209,14 +220,10 @@ public class YkneoOath extends Applet {
 		byte type = buf[offs++];
 		short len = getLength(buf, offs);
 		offs += getLengthBytes(len);
-		if(authObj != null) {
-			dirty = true;
-		}
 		if(len == 0) {
-			authObj = null;
+			authObj.setActive(false);
 		} else {
-			OathObj updateAuthObj = new OathObj();
-			updateAuthObj.setKey(buf, offs, type, len);
+			scratchAuth.setKey(buf, offs, type, len);
 			offs += len;
 			
 			if(buf[offs++] != CHALLENGE_TAG) {
@@ -224,7 +231,7 @@ public class YkneoOath extends Applet {
 			}
 			len = getLength(buf, offs);
 			offs += getLengthBytes(len);
-			short respLen = updateAuthObj.calculate(buf, offs, len, tempBuf, _0);
+			short respLen = scratchAuth.calculate(buf, offs, len, tempBuf, _0);
 			offs += len;
 			if(buf[offs++] != RESPONSE_TAG) {
 				ISOException.throwIt(ISO7816.SW_WRONG_DATA);
@@ -235,15 +242,14 @@ public class YkneoOath extends Applet {
 				ISOException.throwIt(ISO7816.SW_WRONG_DATA);
 			}
 			if(Util.arrayCompare(buf, offs, tempBuf, _0, len) == 0) {
-				authObj = updateAuthObj;
+				OathObj oldAuth = authObj;
+				authObj = scratchAuth;
+				scratchAuth = oldAuth;
+				oldAuth.setActive(false);
+				authObj.setActive(true);
 			} else {
 				ISOException.throwIt(ISO7816.SW_DATA_INVALID);
 			}
-			
-			updateAuthObj = null;
-		}
-		if(dirty) {
-			JCSystem.requestObjectDeletion();
 		}
 	}
 

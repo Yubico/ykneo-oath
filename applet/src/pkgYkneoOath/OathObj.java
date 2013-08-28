@@ -34,6 +34,7 @@ public class OathObj {
 	private byte type;
 	private byte digits;
 	private short counter = 0;
+	private boolean active = false;
 
 	private byte[] inner;
 	private byte[] outer;
@@ -234,5 +235,13 @@ public class OathObj {
 	
 	public short getDigestLength() {
 		return digest.getLength();
+	}
+	
+	public boolean isActive() {
+		return active;
+	}
+	
+	public void setActive(boolean active) {
+		this.active = active;
 	}
 }
