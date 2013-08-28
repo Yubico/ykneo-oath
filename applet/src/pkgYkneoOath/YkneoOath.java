@@ -23,6 +23,7 @@ public class YkneoOath extends Applet {
     public static final byte T_RESPONSE_TAG = 0x76;
     public static final byte NO_RESPONSE_TAG = 0x77;
     public static final byte PROPERTY_TAG = 0x78;
+    public static final byte VERSION_TAG = 0x79;
 
     public static final byte PUT_INS = 0x01;
     public static final byte DELETE_INS = 0x02;
@@ -47,6 +48,8 @@ public class YkneoOath extends Applet {
 	private RandomData rng;
 	
 	private byte[] identity;
+	
+	private static final byte[] version = {0x00,0x00,0x01};
 
 	public YkneoOath() {
 		tempBuf = JCSystem.makeTransientByteArray((short) 512, JCSystem.CLEAR_ON_DESELECT);
@@ -68,6 +71,10 @@ public class YkneoOath extends Applet {
 		if (selectingApplet()) {
 			byte[] buf = apdu.getBuffer();
 			short offs = 0;
+			buf[offs++] = VERSION_TAG;
+			buf[offs++] = (byte)version.length;
+			Util.arrayCopyNonAtomic(version, _0, buf, offs, (short) version.length);
+			offs += (byte) version.length;
 			buf[offs++] = NAME_TAG;
 			short nameLen = (short) identity.length;
 			buf[offs++] = (byte) nameLen;

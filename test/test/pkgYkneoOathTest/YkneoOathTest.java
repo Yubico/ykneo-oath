@@ -168,7 +168,7 @@ public class YkneoOathTest {
 		Arrays.fill(buf, (byte)0);
 		ykneoOath.mockSelectApplet(true);
 		ykneoOath.process(apdu);
-		offs = 10;
+		offs = 15;
 		assertEquals(YkneoOath.CHALLENGE_TAG, buf[offs++]);
 		assertEquals(0x08, buf[offs++]);
 		byte[] data = new byte[8];
