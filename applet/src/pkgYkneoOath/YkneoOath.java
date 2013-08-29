@@ -306,6 +306,7 @@ public class YkneoOath extends Applet {
 		OathObj obj = OathObj.firstObject;
 		while(obj != null) {
 			if(!obj.isActive()) {
+				obj = obj.nextObject;
 				continue;
 			}
 			buf[offs++] = NAME_TAG;
@@ -337,6 +338,7 @@ public class YkneoOath extends Applet {
 		OathObj object = OathObj.firstObject;
 		while(object != null) {
 			if(!object.isActive()) {
+				object = object.nextObject;
 				continue;
 			}
 			tempBuf[len++] = object.getType();
