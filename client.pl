@@ -187,9 +187,10 @@ if($action eq 'calculate') {
   my @apdu = (0x00, 0xa2, 0x00, 0x01, $len, $name_tag, scalar(@name_p), @name_p, $challenge_tag, scalar(@$chal_p), @$chal_p);
   my $repl = send_apdu(\@apdu);
 
-  die "error on calc" unless $repl->[0] == 0x7d;
-  my $offs = 2; # status and length..
-  my $code = calc_oath($repl, $offs);
+  die "error on calc" unless $repl->[0] == $t_response_tag;
+  my $digits = $repl->[2];
+  my $offs = 3; # status and length..
+  my $code = calc_oath($repl, $offs, $digits);
   printf("code is %0${digits}d\n", $code);
 }
 
@@ -202,15 +203,21 @@ if($action eq 'calculate-all') {
   $len = scalar(@$repl);
   my $offs = 0;
   while($offs < $len - 2) {
-    die "error on calc all" unless $repl->[$offs++] == 0x7a;
+    die "error on calc all" unless $repl->[$offs++] == $name_tag;
     my $length = get_len($repl, $offs++);
     for(my $i = 0; $i < $length; $i++) {
       print chr($repl->[$offs + $i]);
     }
     $offs += $length;
-    die "error on calc all" unless $repl->[$offs++] == 0x7d;
+    if($repl->[$offs] == $no_response_tag) {
+      print(": HOTP\n");
+      $offs += 3;
+      next;
+    }
+    die "error on calc all" unless $repl->[$offs++] == $t_response_tag;
     $length = get_len($repl, $offs++);
-    my $code = calc_oath($repl, $offs);
+    my $digits = $repl->[$offs];
+    my $code = calc_oath($repl, $offs + 1, $digits);
     printf(": %0${digits}d", $code);
     print "\n";
     $offs += $length;
@@ -220,6 +227,7 @@ if($action eq 'calculate-all') {
 sub calc_oath {
   my $repl = shift;
   my $offs = shift;
+  my $digits = shift;
 
   my $ref = [@$repl[$offs..($offs + 3)]];
 
