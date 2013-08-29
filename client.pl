@@ -24,6 +24,7 @@ my $code;
 my $debug;
 my $digits = 6;
 my $help = 0;
+my $time;
 
 my $name_tag = 0x71;
 my $name_list_tag = 0x72;
@@ -50,6 +51,7 @@ GetOptions("reader=s" => \$readerMatch,
            "debug" => \$debug,
            "digits=i" => \$digits,
            "reset" => \&set_action,
+           "time=s" => \$time,
            "help" => \$help);
 
 pod2usage(1) if $help;
@@ -193,6 +195,17 @@ if($action eq 'delete') {
   my $len = scalar(@name_p) + 2;
   my @apdu = (0x00, 0x02, 0x00, 0x00, $len, $name_tag, scalar(@name_p), @name_p);
   my $repl = send_apdu(\@apdu);
+}
+
+die "Only specify one of time and challenge" if defined($time) && defined($challenge);
+if($time) {
+  if($time eq 'now') {
+    $time = time();
+  }
+  $time /= 30;
+  $time = int($time);
+  $challenge = sprintf("000000000%02x", $time);
+  $challenge =~ s/([0-9a-fA-F]{2})/$1 /g;
 }
 
 if($action eq 'calculate') {
@@ -347,6 +360,7 @@ client.pl [options] [action]
   -type=xx        type of credential (10=HOTP, 20=TOTP, 1=HMAC-SHA1, 2=HMAC-SHA256) (valid for put/change-code)
   -code=code      unlock-code to send
   -debug          debug mode (show all APDUs sent)
+  -time           take challenge as time, either now or seconds since epoch (valid for calculate)
 
  Actions:
   -list           list loaded credentials
