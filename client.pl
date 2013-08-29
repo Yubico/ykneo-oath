@@ -84,6 +84,7 @@ die "unexpected data: " . hex($res[5]) if hex($res[5]) != $name_tag;
 my $len = hex($res[6]);
 my $id = join(' ', @res[7 .. (6 + $len)]) . " ";
 print "id of key is $id.\n" if $debug;
+my $id_p = pack('C8', @{unpack_hex($id)});
 
 if($action eq 'reset') {
   print "This will reset this key permanently, abort now if you don't want that!\n";
@@ -97,12 +98,9 @@ if(scalar(@res) > $offs) {
   die "no code provided and key is protected." unless defined($code);
   $offs++;
   my $len = hex($res[$offs]);
-  my $id_p = pack('C8', @{unpack_hex($id)});
-  #my $chal_pack = pack('C8', @{unpack_hex(@res[$offs .. ($offs + $len)] . " ")});
   my $chal_p = unpack_hex(join(' ', @res[$offs + 1 .. ($offs + $len)]) . " ");
   my $code_pack = pbkdf2($code, $id_p, $pw_iterations, 16, \&hmac_sha1);
   my $hash_func = \&hmac_sha1; # XXX: figure out when to use sha256
-  #my $code_pack = pack('C' . scalar(@$code_p), @$code_p);
   my $chal_pack = pack('C' . $challenge_length, @$chal_p);
   my $resp = &$hash_func($chal_pack, $code_pack);
   my @resp_p = unpack('C*', $resp);
@@ -137,9 +135,22 @@ die "no action specified" unless $action;
 
 if($action eq 'change-code') {
   die "No key specified." unless $key;
-  my $key_p = unpack_hex($key);
-  my $len = scalar(@$key_p) + 2;
-  my @apdu = (0x00, 0x03, 0x00, 0x00, $len, $key_tag, hex($type), scalar(@$key_p), @$key_p);
+  my $hash_func = \&hmac_sha1; # XXX: figure out when to use sha256
+  my $code_pack = pbkdf2($key, $id_p, $pw_iterations, 16, \&hmac_sha1);
+  my @code_p = unpack('C*', $code_pack);
+  my $len = scalar(@code_p) + 2;
+
+  for(my $i = 0; $i < $challenge_length; $i++) {
+    $challenge .= sprintf("%02x ", rand(0xff));
+  }
+  my $own_chal_p = unpack_hex($challenge);
+  $len += $challenge_length + 2;
+  my $chal_pack = pack('C' . $challenge_length, @$own_chal_p);
+  my $correct = &$hash_func($chal_pack, $code_pack);
+  my @correct_p = unpack('C*', $correct);
+  $len += scalar(@correct_p) + 2;
+
+  my @apdu = (0x00, 0x03, 0x00, 0x00, $len, $key_tag, scalar(@code_p) + 1, 0x21, @code_p, $challenge_tag, $challenge_length, @$own_chal_p, $response_tag, scalar(@correct_p), @correct_p);
   my $repl = send_apdu(\@apdu);
   if($repl->[0] != 0x90) {
     die "failed setting code.";
