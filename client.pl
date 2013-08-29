@@ -129,7 +129,7 @@ if($action eq 'change-code') {
   die "No key specified." unless $key;
   my $key_p = unpack_hex($key);
   my $len = scalar(@$key_p) + 2;
-  my @apdu = (0x00, 0x03, 0x00, 0x00, $len, $key_tag, $type, scalar(@$key_p), @$key_p);
+  my @apdu = (0x00, 0x03, 0x00, 0x00, $len, $key_tag, hex($type), scalar(@$key_p), @$key_p);
   my $repl = send_apdu(\@apdu);
   if($repl->[0] != 0x90) {
     die "failed setting code.";
@@ -162,7 +162,7 @@ if($action eq 'put') {
   my @name_p = unpack("C*", $name);
   my $key_p = unpack_hex($key);
   my $len = scalar(@name_p) + 2 + scalar(@$key_p) + 3;
-  my @apdu = (0x00, 0x01, 0x00, 0x00, $len, $name_tag, scalar(@name_p), @name_p, $key_tag, scalar(@$key_p) + 2, $type, $digits, @$key_p);
+  my @apdu = (0x00, 0x01, 0x00, 0x00, $len, $name_tag, scalar(@name_p), @name_p, $key_tag, scalar(@$key_p) + 2, hex($type), $digits, @$key_p);
   my $repl = send_apdu(\@apdu);
 }
 
