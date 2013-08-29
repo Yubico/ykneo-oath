@@ -137,8 +137,8 @@ if($action eq 'change-code') {
 }
 
 if($action eq 'list') {
-  my $repl = send_apdu([0x00, $name_list_tag, 0x00, 0x00]);
-  if($repl->[0] != 0xa1) {
+  my $repl = send_apdu([0x00, 0xa1, 0x00, 0x00]);
+  if($repl->[0] != $name_list_tag) {
     die "unknown reply: " . $repl->[0];
   }
   my $offs = 1;
