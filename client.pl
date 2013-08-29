@@ -148,7 +148,7 @@ if($action eq 'list') {
   my $len = get_len($repl, $offs);
   $offs += get_len_bytes($len);
   while($offs < ($len)) {
-    print $repl->[$offs++] . " : ";
+    printf("%02x : ", $repl->[$offs++]);
     my $length = get_len($repl, $offs++);
     for(my $i = 0; $i < $length; $i++) {
       print chr($repl->[$offs + $i]);
