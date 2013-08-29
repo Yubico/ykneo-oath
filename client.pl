@@ -242,6 +242,8 @@ if($action eq 'calculate-all') {
   }
 }
 
+$card->Disconnect();
+
 sub calc_oath {
   my $repl = shift;
   my $offs = shift;
