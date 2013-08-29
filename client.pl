@@ -49,6 +49,7 @@ GetOptions("reader=s" => \$readerMatch,
            "change-code" => \&set_action,
            "debug" => \$debug,
            "digits=i" => \$digits,
+           "reset" => \&set_action,
            "help" => \$help);
 
 pod2usage(1) if $help;
@@ -83,6 +84,12 @@ die "unexpected data: " . hex($res[5]) if hex($res[5]) != $name_tag;
 my $len = hex($res[6]);
 my $id = join(' ', @res[7 .. (6 + $len)]) . " ";
 print "id of key is $id.\n" if $debug;
+
+if($action eq 'reset') {
+  print "This will reset this key permanently, abort now if you don't want that!\n";
+  sleep(3);
+  $card->TransmitWithCheck("00 04 de ad", "90 00", $debug);
+}
 
 my $offs = $len + 7;
 if(scalar(@res) > $offs) {
@@ -335,8 +342,9 @@ client.pl [options] [action]
   -calculate      calculate an oath code
   -calculate-all  calculate oath code for all loaded credentials
   -change-code    change unlock-code
+  -reset          reset to empty state (will delete all credentials)
 
- Key, challenge and code take the value as either an ascii string or as a byte
+ Key and challenge take the value as either an ascii string or as a byte
   array like: '6b 61 6b 61 ' (note the trailing space).
 
 =cut
