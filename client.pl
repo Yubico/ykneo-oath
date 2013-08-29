@@ -12,6 +12,7 @@ use Pod::Usage;
 use Digest::SHA qw(hmac_sha1 hmac_sha256);
 
 my $challenge_length = 8;
+my $pw_iterations = 1000;
 
 my $readerMatch;
 my $action;
@@ -32,6 +33,7 @@ my $response_tag = 0x75;
 my $t_response_tag = 0x76;
 my $no_response_tag = 0x77;
 my $property_tag = 0x78;
+my $version_tag = 0x79;
 
 GetOptions("reader=s" => \$readerMatch,
            "list" => \&set_action,
@@ -69,58 +71,59 @@ my $card = new Chipcard::PCSC::Card($rContext, $reader, $Chipcard::PCSC::SCARD_S
 die "Card connection failed." unless $card;
 
 # select applet
-my $sw = $card->TransmitWithCheck("00 a4 04 00 07 a0 00 00 05 27 21 01", "90 00", $debug);
+my ($sw, $data) = $card->TransmitWithCheck("00 a4 04 00 07 a0 00 00 05 27 21 01", "90 00", $debug);
 die "Failed to select applet." unless defined $sw;
+my @res = split(' ', $data);
+die "unexpexted data: " . hex($res[0]) if hex($res[0]) != $version_tag || hex($res[1]) != 3;
+if($debug) {
+  my $version = hex($res[2]).'.'.hex($res[3]).'.'.hex($res[4]);
+  print "version $version detected.\n";
+}
+die "unexpected data: " . hex($res[5]) if hex($res[5]) != $name_tag;
+my $len = hex($res[6]);
+my $id = join(' ', @res[7 .. (6 + $len)]) . " ";
+print "id of key is $id.\n" if $debug;
 
-if(defined($code)) {
-  my $code_p = unpack_hex($code);
+my $offs = $len + 7;
+if(scalar(@res) > $offs) {
+  die "unexpected data: " . hex($res[$offs]) if hex($res[$offs]) != $challenge_tag;
+  die "no code provided and key is protected." unless defined($code);
+  $offs++;
+  my $len = hex($res[$offs]);
+  my $id_p = pack('C8', @{unpack_hex($id)});
+  #my $chal_pack = pack('C8', @{unpack_hex(@res[$offs .. ($offs + $len)] . " ")});
+  my $chal_p = unpack_hex(join(' ', @res[$offs + 1 .. ($offs + $len)]) . " ");
+  my $code_pack = pbkdf2($code, $id_p, $pw_iterations, 16, \&hmac_sha1);
+  my $hash_func = \&hmac_sha1; # XXX: figure out when to use sha256
+  #my $code_pack = pack('C' . scalar(@$code_p), @$code_p);
+  my $chal_pack = pack('C' . $challenge_length, @$chal_p);
+  my $resp = &$hash_func($chal_pack, $code_pack);
+  my @resp_p = unpack('C*', $resp);
+
   my $challenge;
   for(my $i = 0; $i < $challenge_length; $i++) {
     $challenge .= sprintf("%02x ", rand(0xff));
   }
-  my $chal_p = unpack_hex($challenge);
-  my $len = scalar(@$chal_p) + 2;
-  my @apdu = (0x00, 0xa3, 0x00, 0x00, $len, $challenge_tag, $challenge_length, @$chal_p);
+  my $own_chal_p = unpack_hex($challenge);
+  $len = scalar(@resp_p) + 2 + scalar(@$own_chal_p) + 2;
+  my @apdu = (0x00, 0xa3, 0x00, 0x00, $len, $response_tag, scalar(@resp_p), @resp_p, $challenge_tag, scalar(@$own_chal_p), @$own_chal_p);
   my $repl = send_apdu(\@apdu);
-  if($repl->[0] != 0x7e) {
-    die "wrong answer from server.." . $repl->[0];
+
+  if($repl->[0] != $response_tag) {
+    die "wrong answer from server.. " . $repl->[0];
   }
-  my $length = $repl->[3];
-  my $hash_func;
-  if($length == 20) {
-    $hash_func = \&hmac_sha1;
-  } elsif($length == 32) {
-    $hash_func = \&hmac_sha256;
-  } else {
-    die "unknown length: $length";
-  }
+  my $length = $repl->[1];
   my @answer;
-  for(my $i = 4; $i < $length + 4; $i++) {
+  for(my $i = 2; $i < $length + 2; $i++) {
     push(@answer, $repl->[$i]);
   }
   my $answer_pack = pack('C' . $length, @answer);
-  my $code_pack = pack('C' . scalar(@$code_p), @$code_p);
-  my $chal_pack = pack('C' . $challenge_length, @$chal_p);
+  $chal_pack = pack('C' . $challenge_length, @$own_chal_p);
   my $correct = &$hash_func($chal_pack, $code_pack);
   if($correct ne $answer_pack) {
     die "answer does not match expected!";
   }
-  if($repl->[$length + 4] != 0x7f) {
-    die "unexpected tag: " . $repl->[$length + 4];
-  }
-  my $offs = $length + 6;
-  $length = $repl->[$length + 5];
-  my $new_chal;
-  for(my $i = $offs; $i < $length + $offs; $i++) {
-    $new_chal .= sprintf("%02x ", $repl->[$i]);
-  }
-  $chal_p = unpack_hex($new_chal);
-  $chal_pack = pack('C' . $length, @$chal_p);
-  my $resp = &$hash_func($chal_pack, $code_pack);
-  my @resp_p = unpack('C*', $resp);
-  $len = scalar(@resp_p) + 2;
-  @apdu = (0x00, 0xa3, 0x00, 0x00, $len, 0x7f, scalar(@resp_p), @resp_p);
-  $repl = send_apdu(\@apdu);
+  print "mutual authentication succeeded.\n" if $debug;
 }
 
 die "no action specified" unless $action;
@@ -279,6 +282,22 @@ sub send_apdu {
     } print "\n";
   }
   return $repl;
+}
+
+sub pbkdf2
+{
+  my ($password, $salt, $iter, $keylen, $prf) = @_;
+  my ($k, $t, $u, $ui, $i);
+  $t = "";
+  for ($k = 1; length($t) <  $keylen; $k++) {
+    $u = $ui = &$prf($salt.pack('N', $k), $password);
+    for ($i = 1; $i < $iter; $i++) {
+      $ui = &$prf($ui, $password);
+      $u ^= $ui;
+    }
+    $t .= $u;
+  }
+  return substr($t, 0, $keylen);
 }
 
 __END__
