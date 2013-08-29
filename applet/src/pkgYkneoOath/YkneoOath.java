@@ -291,7 +291,7 @@ public class YkneoOath extends Applet {
 		buf[respOffs++] = object.getDigits();
 		Util.arrayCopy(tempBuf, _0, buf, respOffs, len);
 		
-		return (short) (len + getLengthBytes(len) + 1);
+		return (short) (len + getLengthBytes(len) + 2);
 	}
 	
 	private short handleCalcAll(byte[] buf, byte p2) {
