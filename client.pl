@@ -62,7 +62,10 @@ my $rContext = new Chipcard::PCSC;
 my @readers = $rContext->ListReaders();
 foreach my $read (@readers) {
   if(defined($readerMatch)) {
-    next unless $read =~ m/.*$readerMatch.*/;
+    unless($read =~ m/.*$readerMatch.*/) {
+      print "Skipping reader $read.\n";
+      next;
+    }
   }
   $reader = $read;
   last;
