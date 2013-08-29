@@ -363,7 +363,7 @@ client.pl [options] [action]
   -type=xx        type of credential (10=HOTP, 20=TOTP, 1=HMAC-SHA1, 2=HMAC-SHA256) (valid for put/change-code)
   -code=code      unlock-code to send
   -debug          debug mode (show all APDUs sent)
-  -time           take challenge as time, either now or seconds since epoch (valid for calculate)
+  -time=time      take challenge as time, either now or seconds since epoch (valid for calculate)
 
  Actions:
   -list           list loaded credentials
