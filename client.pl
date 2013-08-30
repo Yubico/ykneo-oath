@@ -225,7 +225,7 @@ if($action eq 'calculate') {
   my $digits = $repl->[2];
   my $offs = 3; # status and length..
   my $code = calc_oath($repl, $offs, $digits);
-  printf("code is %0${digits}d\n", $code);
+  print "code is $code\n";
 }
 
 if($action eq 'calculate-all') {
@@ -252,7 +252,7 @@ if($action eq 'calculate-all') {
     $length = get_len($repl, $offs++);
     my $digits = $repl->[$offs];
     my $code = calc_oath($repl, $offs + 1, $digits);
-    printf(": %0${digits}d", $code);
+    print ": $code";
     print "\n";
     $offs += $length;
   }
@@ -268,7 +268,7 @@ sub calc_oath {
   my $ref = [@$repl[$offs..($offs + 3)]];
 
   my $code = unpack("N", pack("C4", @$ref));
-  return $code % (10 ** $digits);
+  return sprintf("%0${digits}d", $code % (10 ** $digits));
 }
 
 sub get_len {
