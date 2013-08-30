@@ -63,7 +63,7 @@ my @readers = $rContext->ListReaders();
 foreach my $read (@readers) {
   if(defined($readerMatch)) {
     unless($read =~ m/.*$readerMatch.*/) {
-      print "Skipping reader $read.\n";
+      print "Skipping reader $read.\n" if $debug;
       next;
     }
   }
