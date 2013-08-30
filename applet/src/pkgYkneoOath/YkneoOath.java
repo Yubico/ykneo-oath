@@ -380,10 +380,10 @@ public class YkneoOath extends Applet {
 		if(object == null) {
 			object = OathObj.getFreeObject();
 			object.setName(buf, offs, len);
-		} else {
-			// make sure we protect against tearing
-			object.setActive(false);
 		}
+
+		// make sure we protect against tearing
+		object.setActive(false);
 		offs += len;
 		
 		if(buf[offs++] != KEY_TAG) {
