@@ -381,9 +381,6 @@ public class YkneoOath extends Applet {
 			object = OathObj.getFreeObject();
 			object.setName(buf, offs, len);
 		}
-
-		// make sure we protect against tearing
-		object.setActive(false);
 		offs += len;
 		
 		if(buf[offs++] != KEY_TAG) {
@@ -400,6 +397,9 @@ public class YkneoOath extends Applet {
 			ISOException.throwIt(ISO7816.SW_WRONG_DATA);
 		}
 		byte digits = buf[offs++];
+		
+		// protect against tearing (we want to do this as late as possible)
+		object.setActive(false);
 		object.setDigits(digits);
 
 		object.setKey(buf, offs, keyType, (short) (len - 2));
