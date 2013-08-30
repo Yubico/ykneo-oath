@@ -5,21 +5,25 @@ package pkgYkneoOathTest;
  * All rights reserved.
  */
 
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
+
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 
+import javacard.framework.APDU;
+
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
-
-import javacard.framework.APDU;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import static org.junit.Assert.*;
-
 
 import pkgYkneoOath.OathObj;
 import pkgYkneoOath.YkneoOath;
@@ -257,6 +261,86 @@ public class YkneoOathTest {
 		resp = new byte[4];
 		System.arraycopy(buf, 3, resp, 0, resp.length);
 		assertArrayEquals(expect, resp);
+	}
+	
+	@Test
+	public void testDelete() {
+		String key = "blahonga!";
+		String firstName = "one";
+		String secondName = "two";
+		String thirdName = "three";
+		byte type = OathObj.HMAC_SHA1 | OathObj.TOTP_TYPE;
+		
+		byte[] buf = new byte[256];
+		buf[1] = YkneoOath.PUT_INS;
+		int offs = 5;
+		buf[offs++] = YkneoOath.NAME_TAG;
+		buf[offs++] = (byte) firstName.length();
+		int nameoffs = offs;
+		System.arraycopy(firstName.getBytes(), 0, buf, offs, firstName.length());
+		offs += firstName.length();
+		buf[offs++] = YkneoOath.KEY_TAG;
+		buf[offs++] = (byte) (key.length() + 2);
+		buf[offs++] = type;
+		buf[offs++] = 6;
+		System.arraycopy(key.getBytes(), 0, buf, offs, key.length());
+		APDU apdu = new APDU(buf);
+		ykneoOath.process(apdu);
+		assertEquals(firstName.length(), secondName.length());
+		System.arraycopy(secondName.getBytes(), 0, buf, nameoffs, secondName.length());
+		ykneoOath.process(apdu);
+		ykneoOath.process(listApdu);
+		byte[] list = listApdu.getBuffer();
+		offs = 0;
+		assertEquals(YkneoOath.NAME_LIST_TAG, list[offs++]);
+		assertEquals((firstName.length() + 2) * 2, list[offs++]);
+		byte[] name = new byte[3];
+		System.arraycopy(list, 4, name, 0, 3);
+		assertArrayEquals(firstName.getBytes(), name);
+		System.arraycopy(list, 9, name, 0, 3);
+		assertArrayEquals(secondName.getBytes(), name);
+		Arrays.fill(buf, (byte)0);
+		buf[1] = YkneoOath.DELETE_INS;
+		offs = 5;
+		buf[offs++] = YkneoOath.NAME_TAG;
+		buf[offs++] = (byte) firstName.length();
+		System.arraycopy(firstName.getBytes(), 0, buf, offs, firstName.length());
+		ykneoOath.process(apdu);
+		Arrays.fill(list, (byte)0);
+		list[1] = YkneoOath.LIST_INS;
+		ykneoOath.process(listApdu);
+		offs = 0;
+		assertEquals(YkneoOath.NAME_LIST_TAG, list[offs++]);
+		assertEquals(secondName.length() + 2, list[offs++]);
+		System.arraycopy(list, 4, name, 0, 3);
+		assertArrayEquals(secondName.getBytes(), name);
+		Arrays.fill(buf, (byte)0);
+		buf[1] = YkneoOath.PUT_INS;
+		offs = 5;
+		buf[offs++] = YkneoOath.NAME_TAG;
+		buf[offs++] = (byte) thirdName.length();
+		System.arraycopy(thirdName.getBytes(), 0, buf, offs, thirdName.length());
+		offs += thirdName.length();
+		buf[offs++] = YkneoOath.KEY_TAG;
+		buf[offs++] = (byte) (key.length() + 2);
+		buf[offs++] = type;
+		buf[offs++] = 6;
+		System.arraycopy(key.getBytes(), 0, buf, offs, key.length());
+		ykneoOath.process(apdu);
+		Arrays.fill(list, (byte)0);
+		list[1] = YkneoOath.LIST_INS;
+		ykneoOath.process(listApdu);
+		offs = 0;
+		assertEquals(YkneoOath.NAME_LIST_TAG, list[offs++]);
+		assertEquals(secondName.length() + 2 + thirdName.length() + 2, list[offs++]);
+		offs += 2;
+		name = new byte[thirdName.length()];
+		System.arraycopy(list, offs, name, 0, thirdName.length());
+		offs += thirdName.length() + 2;
+		assertArrayEquals(thirdName.getBytes(), name);
+		name = new byte[secondName.length()];
+		System.arraycopy(list, offs, name, 0, secondName.length());
+		assertArrayEquals(secondName.getBytes(), name);
 	}
 	
 	private static byte[] hmacSha1(byte[] key, byte[] data) {
