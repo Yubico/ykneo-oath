@@ -7,6 +7,7 @@ package pkgYkneoOathTest;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotSame;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -92,6 +93,23 @@ public class OathObjTest {
 		assertEquals(ret, 20);
 		ret = obj.calculate(new byte[] {0x01, 0x02, 0x05}, (short)0, (short)3, resp, (short)0);
 		assertEquals(ret, 20);
+	}
+	
+	@Test
+	public void TestDeactivate() {
+		OathObj first = OathObj.getFreeObject();
+		first.setActive(true);
+		OathObj second = OathObj.getFreeObject();
+		second.setActive(true);
+		assertNotSame(first, second);
+		second.setActive(false);
+		OathObj third = OathObj.getFreeObject();
+		third.setActive(true);
+		assertEquals(second, third);
+		first.setActive(false);
+		second = OathObj.getFreeObject();
+		second.setActive(true);
+		assertEquals(first, second);
 	}
 	
 	/* sha-1 test vectors come from rfc 2202 */
