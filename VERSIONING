@@ -1,0 +1,7 @@
+VERSIONING:
+
+For bugfixes, build version is bumped.
+
+For backwards-compatible protocol changes minor version is bumped.
+
+For backwards-incompatible protocol changes major version is bumped.
