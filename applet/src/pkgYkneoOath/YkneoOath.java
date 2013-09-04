@@ -502,9 +502,13 @@ public class YkneoOath extends Applet {
 		short maxLen = APDU.getOutBlockSize();
 		short result;
 		short remainingData;
+		short toSend = maxLen;
 		
 		short sentData = Util.getShort(propBuf, PROP_SENT_DATA_OFFS);
-		Util.arrayCopy(sendBuffer, sentData, buf, _0, maxLen);
+		if(len < maxLen) {
+			toSend = len;
+		}
+		Util.arrayCopy(sendBuffer, sentData, buf, _0, toSend);
 		if(len > maxLen) {
 			remainingData = (short) (len - maxLen);
 			sentData += maxLen;
