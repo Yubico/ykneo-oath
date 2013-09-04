@@ -62,4 +62,9 @@ public class Util {
     	}
     	return 0;
     }
+    
+    public static final short getShort(byte[] bArray, short bOff) throws NullPointerException,
+    ArrayIndexOutOfBoundsException {
+    	return (short) (((bArray[bOff]) << 8) + ((bArray[(short) (bOff + 1)]) & 0xFF));
+    }
 }

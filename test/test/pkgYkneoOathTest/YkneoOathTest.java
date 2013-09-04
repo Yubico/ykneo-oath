@@ -83,17 +83,20 @@ public class YkneoOathTest {
 		System.arraycopy(new byte[] {YkneoOath.NAME_LIST_TAG, 6, 0x21, 4, 'k', 'a', 'k', 'a'}, 0, expect, 0, 8);
 		assertArrayEquals(expect, listApdu.getBuffer());
 		
-		APDU calcApdu = new APDU(new byte[] {
+		byte[] buf = new byte[256];
+		System.arraycopy(new byte[] {
 			0x00, YkneoOath.CALCULATE_INS, 0x00, 0x00, 0x10,
 			YkneoOath.NAME_TAG, 0x04, 'k', 'a', 'k', 'a',
-			YkneoOath.CHALLENGE_TAG, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
-			0x00, 0x00
-		});
+			YkneoOath.CHALLENGE_TAG, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01}, 0, buf, 0, 21
+			);
+		
+		APDU calcApdu = new APDU(buf);
 		ykneoOath.process(calcApdu);
-		assertArrayEquals(new byte[]{
+		byte[] expected = new byte[256];
+		System.arraycopy(new byte[]{
 				YkneoOath.RESPONSE_TAG, 0x15, 0x06, (byte) 0xb3, (byte) 0x99, (byte) 0xbd, (byte) 0xfc, (byte) 0x9d, 0x05, (byte) 0xd1, 0x2a, (byte) 0xc4, 0x35, (byte) 0xc4,
-				(byte) 0xc8, (byte) 0xd6, (byte) 0xcb, (byte) 0xd2, 0x47, (byte) 0xc4, 0x0a, 0x30, (byte) 0xf1
-		}, calcApdu.getBuffer());
+				(byte) 0xc8, (byte) 0xd6, (byte) 0xcb, (byte) 0xd2, 0x47, (byte) 0xc4, 0x0a, 0x30, (byte) 0xf1}, 0, expected, 0, 23);
+		assertArrayEquals(expected, buf);
 		
 		APDU delApdu = new APDU(new byte[] {
 				0x00, YkneoOath.DELETE_INS, 0x00, 0x00, 0x06, YkneoOath.NAME_TAG, 0x04, 0x6b, 0x61, 0x6b, 0x61
@@ -120,41 +123,47 @@ public class YkneoOathTest {
 		System.arraycopy(new byte[] {(byte) YkneoOath.NAME_LIST_TAG, 6, 0x21, 4, 'k', 'a', 'k', 'a'}, 0, expect, 0, 8);
 		assertArrayEquals(expect, listApdu.getBuffer());
 
-		APDU calcApdu = new APDU(new byte[] {
+		byte[] buf = new byte[256];
+		System.arraycopy(new byte[] {
 				0x00, YkneoOath.CALCULATE_INS, 0x00, 0x00, 0x10,
 				YkneoOath.NAME_TAG, 0x04, 'k', 'a', 'k', 'a',
-				YkneoOath.CHALLENGE_TAG, 0x08, (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff,
-				0x00, 0x00
-		});
+				YkneoOath.CHALLENGE_TAG, 0x08, (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff},
+				0, buf, 0, 21);
+		APDU calcApdu = new APDU(buf);
 		ykneoOath.process(calcApdu);
-		assertArrayEquals(new byte[]{
+		byte[] expected = new byte[256];
+		System.arraycopy(new byte[]{
 				YkneoOath.RESPONSE_TAG, 0x15, 0x06, 0x79, 0x3e, 0x1b, (byte) 0xbd, (byte) 0xbf, (byte) 0xa7, 0x75, (byte) 0xa8, 0x63,(byte) 0xcc,
-				(byte) 0x80, 0x02, (byte) 0xce, (byte) 0xe4, (byte) 0xbd, 0x6c, (byte) 0xd7, (byte) 0xce, (byte) 0xb8, (byte) 0xcd
-		}, calcApdu.getBuffer());
+				(byte) 0x80, 0x02, (byte) 0xce, (byte) 0xe4, (byte) 0xbd, 0x6c, (byte) 0xd7, (byte) 0xce, (byte) 0xb8, (byte) 0xcd},
+				0, expected, 0, 23);
+		assertArrayEquals(expected, buf);
 		ykneoOath.process(putApdu);
 		
 		// make sure there is only one object after overwrite
 		assertEquals(OathObj.firstObject, OathObj.lastObject);
 		assertNull(OathObj.firstObject.nextObject);
 		
-		byte[] buf = listApdu.getBuffer();
-		Arrays.fill(buf, (byte)0x00);
-		buf[1] = YkneoOath.LIST_INS;
+		byte[] listBuf = listApdu.getBuffer();
+		Arrays.fill(listBuf, (byte)0x00);
+		listBuf[1] = YkneoOath.LIST_INS;
 		ykneoOath.process(listApdu);
 		System.arraycopy(new byte[] {YkneoOath.NAME_LIST_TAG, 6, 0x21, 4, 'k', 'a', 'k', 'a'}, 0, expect, 0, 8);
 		assertArrayEquals(expect, listApdu.getBuffer());
 		
-		calcApdu = new APDU(new byte[] {
+		Arrays.fill(buf, (byte)0);
+		System.arraycopy(new byte[] {
 				0x00, YkneoOath.CALCULATE_INS, 0x00, 0x00, 0x10,
 				YkneoOath.NAME_TAG, 0x04, 'k', 'a', 'k', 'a',
-				YkneoOath.CHALLENGE_TAG, 0x08, (byte) 0xff, (byte) 0x00, (byte) 0xff, (byte) 0x00, (byte) 0xff, (byte) 0x00, (byte) 0xff, (byte) 0x00,
-				0x00, 0x00
-		});
+				YkneoOath.CHALLENGE_TAG, 0x08, (byte) 0xff, (byte) 0x00, (byte) 0xff, (byte) 0x00, (byte) 0xff, (byte) 0x00, (byte) 0xff, (byte) 0x00},
+				0, buf, 0, 21);
+		calcApdu = new APDU(buf);
 		ykneoOath.process(calcApdu);
-		assertArrayEquals(new byte[] {
+		Arrays.fill(expected, (byte)0);
+		System.arraycopy(new byte[] {
 				YkneoOath.RESPONSE_TAG, 0x15, 0x06, 0x3b, 0x0e, 0x3c, 0x63, 0x1c, 0x01, 0x67, (byte) 0xb0, (byte) 0x93, (byte) 0xa5,
 				(byte) 0xec, (byte) 0xb9, 0x09, 0x7d, 0x0b, (byte) 0x8e, (byte) 0x9a, (byte) 0xcc, 0x2f, 0x7f
-		}, calcApdu.getBuffer());
+		}, 0, expected, 0, 23);
+		assertArrayEquals(expected, buf);
 	}
 	
 	@Test

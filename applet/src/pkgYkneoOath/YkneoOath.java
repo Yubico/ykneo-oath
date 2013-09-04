@@ -46,16 +46,23 @@ public class YkneoOath extends Applet {
     public static final byte CALCULATE_INS = (byte)0xa2;
     public static final byte VALIDATE_INS = (byte)0xa3;
     public static final byte CALCULATE_ALL_INS = (byte)0xa4;
+    public static final byte SEND_REMAINING_INS = (byte)0xa5;
 	
 	private static final short _0 = 0;
 
 	private static final byte CHALLENGE_LENGTH = 8;
 	
 	private byte[] tempBuf;
+	private byte[] sendBuffer;
 
 	private OathObj authObj;
 	private OathObj scratchAuth;
-	private byte[] authState;
+	private byte[] propBuf;
+	
+	private static final byte PROP_AUTH_OFFS = 0;
+	private static final byte PROP_SENT_DATA_OFFS = 1;
+	private static final byte PROP_REMAINING_DATA_LEN = 3;
+	private static final byte PROP_BUF_SIZE = PROP_REMAINING_DATA_LEN + 2;
 	
 	private RandomData rng;
 	
@@ -65,7 +72,8 @@ public class YkneoOath extends Applet {
 
 	public YkneoOath() {
 		tempBuf = JCSystem.makeTransientByteArray((short) 512, JCSystem.CLEAR_ON_DESELECT);
-		authState = JCSystem.makeTransientByteArray((short)2, JCSystem.CLEAR_ON_DESELECT);
+		sendBuffer = JCSystem.makeTransientByteArray((short)1024, JCSystem.CLEAR_ON_DESELECT);
+		propBuf = JCSystem.makeTransientByteArray(PROP_BUF_SIZE, JCSystem.CLEAR_ON_DESELECT);
 		rng = RandomData.getInstance(RandomData.ALG_PSEUDO_RANDOM);
 		
 		identity = new byte[CHALLENGE_LENGTH];
@@ -115,7 +123,7 @@ public class YkneoOath extends Applet {
 		byte ins = buf[ISO7816.OFFSET_INS];
 		
 		if(authObj.isActive() && ins != VALIDATE_INS && ins != RESET_INS) {
-			if(authState[1] != 1) {
+			if(propBuf[PROP_AUTH_OFFS] != 1) {
 				ISOException.throwIt(ISO7816.SW_SECURITY_STATUS_NOT_SATISFIED);
 			}
 		}
@@ -151,38 +159,41 @@ public class YkneoOath extends Applet {
 			break;
 		case LIST_INS: // list
 			if(p1p2 == 0x0000) {
-				sendLen = handleList(buf);
+				sendLen = handleList(sendBuffer);
 			} else {
 				ISOException.throwIt(ISO7816.SW_WRONG_P1P2);
 			}
 			break;
 		case CALCULATE_INS: // calculate
 			if(p1 == 0x00 && (p2 == 0x00 || p2 == 0x01)) {
-				sendLen = handleCalc(buf, p2);
+				sendLen = handleCalc(buf, p2, sendBuffer);
 			} else {
 				ISOException.throwIt(ISO7816.SW_WRONG_P1P2);
 			}
 			break;
 		case VALIDATE_INS: // validate code
 			if(p1p2 == 0x0000) {
-				sendLen = handleValidate(buf);
+				sendLen = handleValidate(buf, sendBuffer);
 			} else {
 				ISOException.throwIt(ISO7816.SW_WRONG_P1P2);
 			}
 			break;
 		case CALCULATE_ALL_INS: // calculate all codes
 			if(p1 == 0x00 && (p2 == 0x00 || p2 == 0x01)) {
-				sendLen = handleCalcAll(buf, p2);
+				sendLen = handleCalcAll(buf, p2, sendBuffer);
 			} else {
 				ISOException.throwIt(ISO7816.SW_WRONG_P1P2);
 			}
+			break;
+		case SEND_REMAINING_INS: // send data remaining in send buffer
+			sendLen = Util.getShort(propBuf, PROP_REMAINING_DATA_LEN);
 			break;
 		default:
 			ISOException.throwIt(ISO7816.SW_INS_NOT_SUPPORTED);
 		}
 		
 		if(sendLen > 0) {
-			apdu.setOutgoingAndSend(_0 , sendLen);
+			sendData(apdu, sendLen);
 		}
 	}
 
@@ -190,45 +201,45 @@ public class YkneoOath extends Applet {
 		authObj.setActive(false);
 		OathObj.firstObject = null;
 		OathObj.lastObject = null;
-		Util.arrayFillNonAtomic(authState, _0, (short) 2, (byte)0);
+		Util.arrayFillNonAtomic(propBuf, _0, PROP_BUF_SIZE, (byte)0);
 		JCSystem.requestObjectDeletion();
 	}
 
-	private short handleValidate(byte[] buf) {
+	private short handleValidate(byte[] input, byte[] output) {
 		if(!authObj.isActive()) {
 			ISOException.throwIt(ISO7816.SW_DATA_INVALID);
 		}
 		short offs = 5;
-		if(buf[offs++] != RESPONSE_TAG) {
+		if(input[offs++] != RESPONSE_TAG) {
 			ISOException.throwIt(ISO7816.SW_WRONG_DATA);
 		}
-		short len = getLength(buf, offs);
+		short len = getLength(input, offs);
 		// make sure we're getting as long input as we expect
 		if(len != authObj.getDigestLength()) {
 			ISOException.throwIt(ISO7816.SW_WRONG_DATA);
 		}
 		offs += getLengthBytes(len);
 
-		if(Util.arrayCompare(buf, offs, tempBuf, _0, len) == 0) {
-			authState[1] = 1;
+		if(Util.arrayCompare(input, offs, tempBuf, _0, len) == 0) {
+			propBuf[PROP_AUTH_OFFS] = 1;
 		} else {
 			ISOException.throwIt(ISO7816.SW_WRONG_DATA);
 		}
 		offs += len;
-		if(buf[offs++] != CHALLENGE_TAG) {
+		if(input[offs++] != CHALLENGE_TAG) {
 			ISOException.throwIt(ISO7816.SW_WRONG_DATA);
 		}
 
-		len = getLength(buf, offs);
+		len = getLength(input, offs);
 		// don't accept a challenge shorter than 8 bytes
 		if(len < 8) {
 			ISOException.throwIt(ISO7816.SW_WRONG_DATA);
 		}
 		offs += getLengthBytes(len);
-		short respLen =  authObj.calculate(buf, offs, len, tempBuf, _0);
-		buf[0] = RESPONSE_TAG;
-		buf[1] = (byte) respLen;
-		Util.arrayCopyNonAtomic(tempBuf, _0, buf, (short) 2, respLen);
+		short respLen =  authObj.calculate(input, offs, len, tempBuf, _0);
+		output[0] = RESPONSE_TAG;
+		output[1] = (byte) respLen;
+		Util.arrayCopyNonAtomic(tempBuf, _0, output, (short) 2, respLen);
 		return (short) (respLen + 2);
 	}
 
@@ -273,47 +284,47 @@ public class YkneoOath extends Applet {
 		}
 	}
 
-	private short handleCalc(byte[] buf, byte p2) {
+	private short handleCalc(byte[] challenge, byte p2, byte[] output) {
 		short offs = 5;
-		if(buf[offs++] != NAME_TAG) {
+		if(challenge[offs++] != NAME_TAG) {
 			ISOException.throwIt(ISO7816.SW_WRONG_DATA);
 		}
-		short len = getLength(buf, offs);
+		short len = getLength(challenge, offs);
 		offs += getLengthBytes(len);
-		OathObj object = OathObj.findObject(buf, offs, len);
+		OathObj object = OathObj.findObject(challenge, offs, len);
 		if(object == null) {
 			ISOException.throwIt(ISO7816.SW_DATA_INVALID);
 		}
 		offs += len;
 		
-		if(buf[offs++] != CHALLENGE_TAG) {
+		if(challenge[offs++] != CHALLENGE_TAG) {
 			ISOException.throwIt(ISO7816.SW_WRONG_DATA);
 		}
-		len = getLength(buf, offs);
+		len = getLength(challenge, offs);
 		offs += getLengthBytes(len);
         short respOffs = 0;
 		if(p2 == 0x00) {
-			len = object.calculate(buf, offs, len, tempBuf, _0);
-			buf[respOffs++] = RESPONSE_TAG;
+			len = object.calculate(challenge, offs, len, tempBuf, _0);
+			output[respOffs++] = RESPONSE_TAG;
 		} else {
-			len = object.calculateTruncated(buf, offs, len, tempBuf, _0);
-			buf[respOffs++] = T_RESPONSE_TAG;
+			len = object.calculateTruncated(challenge, offs, len, tempBuf, _0);
+			output[respOffs++] = T_RESPONSE_TAG;
 		}
 		
-		respOffs += setLength(buf, respOffs, (short) (len + 1));
-		buf[respOffs++] = object.getDigits();
-		Util.arrayCopy(tempBuf, _0, buf, respOffs, len);
+		respOffs += setLength(output, respOffs, (short) (len + 1));
+		output[respOffs++] = object.getDigits();
+		Util.arrayCopy(tempBuf, _0, output, respOffs, len);
 		
 		return (short) (len + getLengthBytes(len) + 2);
 	}
 	
-	private short handleCalcAll(byte[] buf, byte p2) {
+	private short handleCalcAll(byte[] challenge, byte p2, byte[] output) {
 		short offs = 5;
-		if(buf[offs++] != CHALLENGE_TAG) {
+		if(challenge[offs++] != CHALLENGE_TAG) {
 			ISOException.throwIt(ISO7816.SW_WRONG_DATA);
 		}
-		short chalLen = getLength(buf, offs++);
-		Util.arrayCopyNonAtomic(buf, offs, tempBuf, _0, chalLen);
+		short chalLen = getLength(challenge, offs++);
+		Util.arrayCopyNonAtomic(challenge, offs, tempBuf, _0, chalLen);
 
 		offs = 0;
 		OathObj obj = OathObj.firstObject;
@@ -322,31 +333,31 @@ public class YkneoOath extends Applet {
 				obj = obj.nextObject;
 				continue;
 			}
-			buf[offs++] = NAME_TAG;
-			buf[offs++] = (byte) obj.getNameLength();
-			offs += obj.getName(buf, offs);
+			output[offs++] = NAME_TAG;
+			output[offs++] = (byte) obj.getNameLength();
+			offs += obj.getName(output, offs);
 			short len = 0;
 			if((obj.getType() & OathObj.OATH_MASK) == OathObj.TOTP_TYPE) {
 				if(p2 == 0x00) {
-					buf[offs++] = RESPONSE_TAG;
-					len = obj.calculate(tempBuf, _0, chalLen, buf, (short) (offs + 2));
+					output[offs++] = RESPONSE_TAG;
+					len = obj.calculate(tempBuf, _0, chalLen, output, (short) (offs + 2));
 				} else {
-					buf[offs++] = T_RESPONSE_TAG;
-					len = obj.calculateTruncated(tempBuf, _0, chalLen, buf, (short) (offs + 2));
+					output[offs++] = T_RESPONSE_TAG;
+					len = obj.calculateTruncated(tempBuf, _0, chalLen, output, (short) (offs + 2));
 				}
 			} else {
 
-				buf[offs++] = NO_RESPONSE_TAG;
+				output[offs++] = NO_RESPONSE_TAG;
 			}
-			buf[offs++] = (byte) (len + 1);
-			buf[offs++] = obj.getDigits();
+			output[offs++] = (byte) (len + 1);
+			output[offs++] = obj.getDigits();
 			offs += len;
 			obj = obj.nextObject;
 		}
 		return offs;
 	}
 
-	private short handleList(byte[] buf) {
+	private short handleList(byte[] output) {
 		short len = 0;
 		OathObj object = OathObj.firstObject;
 		while(object != null) {
@@ -361,9 +372,9 @@ public class YkneoOath extends Applet {
 		}
 		
 		short offs = 0;
-		buf[offs++] = NAME_LIST_TAG;
-		offs += setLength(buf, offs, len);
-		return Util.arrayCopy(tempBuf, _0, buf, offs, len);
+		output[offs++] = NAME_LIST_TAG;
+		offs += setLength(output, offs, len);
+		return Util.arrayCopy(tempBuf, _0, output, offs, len);
 	}
 
 	private void handleDelete(byte[] buf) {
@@ -461,6 +472,38 @@ public class YkneoOath extends Applet {
 			buf[offs++] = (byte)0x82;
 			Util.setShort(buf, offs, len);
 			return 3;
+		}
+	}
+	
+	private void sendData(APDU apdu, short len) {
+		byte[] buf = apdu.getBuffer();
+		short maxLen = APDU.getOutBlockSize();
+		short result;
+		short remainingData;
+		
+		short sentData = Util.getShort(propBuf, PROP_SENT_DATA_OFFS);
+		Util.arrayCopy(sendBuffer, sentData, buf, _0, maxLen);
+		if(len > maxLen) {
+			remainingData = (short) (len - maxLen);
+			sentData += maxLen;
+			len = maxLen;
+			if(remainingData > maxLen) {
+				result = (short) (ISO7816.SW_BYTES_REMAINING_00 | maxLen);
+			} else {
+				result = (short) (ISO7816.SW_BYTES_REMAINING_00 | remainingData);
+			}
+		} else {
+			sentData = 0;
+			remainingData = 0;
+			result = ISO7816.SW_NO_ERROR;
+		}
+
+		Util.setShort(propBuf, PROP_SENT_DATA_OFFS, sentData);
+		Util.setShort(propBuf, PROP_REMAINING_DATA_LEN, remainingData);
+		
+		apdu.setOutgoingAndSend(_0, len);
+		if(result != ISO7816.SW_NO_ERROR) {
+			ISOException.throwIt(result);
 		}
 	}
 }

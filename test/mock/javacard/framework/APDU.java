@@ -37,4 +37,8 @@ public class APDU {
     public void setOutgoingAndSend(short bOff, short len) {
     	Arrays.fill(buffer, bOff + len, buffer.length, (byte)0);
     }
+    
+    public static short getOutBlockSize() {
+        return (short)0x00ff;
+    }
 }
