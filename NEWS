@@ -1,7 +1,11 @@
 ykneo-oath NEWS -- History of changes.
 
-* Version 0.1.0 (unreleased)
+* Version 0.1.0 (released 2013-09-04)
 
-* Version 0.0.1 (releases 2013-09-02)
+** add output chaining to support more credentials
+
+** error on put if the added credential will make us unable to output all
+
+* Version 0.0.1 (released 2013-09-02)
 
 ** Initial release.
