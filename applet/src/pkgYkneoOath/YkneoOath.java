@@ -393,6 +393,20 @@ public class YkneoOath extends Applet {
 			ISOException.throwIt(ISO7816.SW_DATA_INVALID);
 		}
 	}
+	
+	private short calculateTotalLen() {
+		short res = 0;
+		OathObj obj = OathObj.firstObject;
+		while(obj != null) {
+			if(!obj.isActive()) {
+				obj = obj.nextObject;
+				continue;
+			}
+			res += obj.getNameLength() + 9; // data and bytes add up to 9
+			obj = obj.nextObject;
+		}
+		return res;
+	}
 
 	private void handlePut(byte[] buf) {
 		short offs = ISO7816.OFFSET_CDATA;
@@ -401,6 +415,12 @@ public class YkneoOath extends Applet {
 		}
 		short len = getLength(buf, offs);
 		offs += getLengthBytes(len);
+		
+		if((short)(calculateTotalLen() + len + 9) > BUFSIZE) {
+			// the output will be longer than we can support, error out.
+			ISOException.throwIt(ISO7816.SW_FILE_FULL);
+		}
+		
 		OathObj object = OathObj.findObject(buf, offs, len);
 		if(object == null) {
 			object = OathObj.getFreeObject();
