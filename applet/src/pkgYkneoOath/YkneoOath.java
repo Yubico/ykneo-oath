@@ -36,6 +36,7 @@ public class YkneoOath extends Applet {
     public static final byte NO_RESPONSE_TAG = 0x77;
     public static final byte PROPERTY_TAG = 0x78;
     public static final byte VERSION_TAG = 0x79;
+    public static final byte IMF_TAG = 0x7a;
 
     public static final byte PUT_INS = 0x01;
     public static final byte DELETE_INS = 0x02;
@@ -450,10 +451,20 @@ public class YkneoOath extends Applet {
 		object.setKey(buf, offs, keyType, (short) (len - 2));
 		offs += (short)(len - 2);
 		
-		if(offs < buf.length && buf[offs++] == PROPERTY_TAG) {
-			object.setProp(buf[offs]);
+		if(offs < buf.length && buf[offs] == PROPERTY_TAG) {
+			offs++;
+			object.setProp(buf[offs++]);
 		} else {
 			object.setProp((byte) 0);
+		}
+		if(offs < buf.length && buf[offs] == IMF_TAG) {
+			offs++;
+			if(buf[offs++] == OathObj.IMF_LEN) {
+				object.setImf(buf, offs);
+				offs += OathObj.IMF_LEN;
+			} else {
+				ISOException.throwIt(ISO7816.SW_WRONG_DATA);
+			}
 		}
 		object.setActive(true);
 	}

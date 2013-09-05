@@ -38,6 +38,7 @@ public class OathObj {
 	
 	private static final byte hmac_buf_size = 64;
 	private static final short NAME_LEN = 64;
+	public static final byte IMF_LEN = 4;
 	
 	public static OathObj firstObject;
 	public static OathObj lastObject;
@@ -48,6 +49,7 @@ public class OathObj {
 	private byte type;
 	private byte digits;
 	private short counter = 0;
+	private byte[] imf;
 	private boolean active = false;
 
 	private byte[] inner;
@@ -217,7 +219,26 @@ public class OathObj {
 			buf = chal;
 		} else if((type & OATH_MASK) == HOTP_TYPE) {
 			Util.arrayFillNonAtomic(scratchBuf, _0, (short)8, (byte)0);
-			Util.setShort(scratchBuf, (short) 6, counter++);
+			if(imf == null || (imf[0] == 0 && imf[1] == 0)) {
+				Util.setShort(scratchBuf, (short) 6, counter);
+			} else {
+				Util.arrayCopyNonAtomic(imf, _0, scratchBuf, (short)4, IMF_LEN);
+				short carry = 0;
+				short ctr1 = (short) ((counter >>> 8) & 0x00ff);
+				short ctr2 = (short) (counter & 0x00ff);
+	        	for(byte j = 7; j > 0; j--) {
+	        		short place = (short) (scratchBuf[j] & 0x00ff);
+	        		if(j == 7) {
+	        			place += ctr2;
+	        		} else if(j == 6) {
+	        			place += ctr1;
+	        		}
+	        		place += carry;
+	        		carry = (byte) (place >>> 8);
+	        		scratchBuf[j] = (byte) (place);
+	        	}
+			}
+			counter++;
 			buf = scratchBuf;
 			chalOffs = 0;
 			len = 8;
@@ -255,5 +276,20 @@ public class OathObj {
 	
 	public void setActive(boolean active) {
 		this.active = active;
+	}
+	
+	public void setImf(byte[] buf, short offs) {
+		if(imf == null) {
+			imf = new byte[IMF_LEN];
+		}
+		for(byte i = 0; i < IMF_LEN; i++) {
+			imf[i] = buf[offs++];
+		}
+	}
+	
+	public void clearImf() {
+		if(imf != null) {
+			Util.arrayFillNonAtomic(imf, _0, IMF_LEN, (byte)0);
+		}
 	}
 }
