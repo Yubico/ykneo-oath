@@ -465,6 +465,8 @@ public class YkneoOath extends Applet {
 			} else {
 				ISOException.throwIt(ISO7816.SW_WRONG_DATA);
 			}
+		} else {
+			object.clearImf();
 		}
 		object.setActive(true);
 	}
