@@ -36,6 +36,7 @@ my $debug;
 my $digits = 6;
 my $help = 0;
 my $time;
+my $imf;
 
 my $name_tag = 0x71;
 my $name_list_tag = 0x72;
@@ -46,6 +47,7 @@ my $t_response_tag = 0x76;
 my $no_response_tag = 0x77;
 my $property_tag = 0x78;
 my $version_tag = 0x79;
+my $imf_tag = 0x7a;
 
 GetOptions("reader=s" => \$readerMatch,
            "list" => \&set_action,
@@ -63,6 +65,7 @@ GetOptions("reader=s" => \$readerMatch,
            "digits=i" => \$digits,
            "reset" => \&set_action,
            "time=s" => \$time,
+           "imf=s" => \$imf,
            "help" => \$help);
 
 pod2usage(1) if $help;
@@ -102,7 +105,7 @@ my $id = join(' ', @res[7 .. (6 + $len)]) . " ";
 print "id of key is $id.\n" if $debug;
 my $id_p = pack('C8', @{unpack_hex($id)});
 
-if($action eq 'reset') {
+if(defined($action) && $action eq 'reset') {
   print "This will reset this key permanently, abort now if you don't want that!\n";
   sleep(3);
   $card->TransmitWithCheck("00 04 de ad", "90 00", $debug);
@@ -200,6 +203,19 @@ if($action eq 'put') {
   my $key_p = unpack_hex($key);
   my $len = scalar(@name_p) + 2 + scalar(@$key_p) + 3;
   my @apdu = (0x00, 0x01, 0x00, 0x00, $len, $name_tag, scalar(@name_p), @name_p, $key_tag, scalar(@$key_p) + 2, hex($type), $digits, @$key_p);
+  if($imf) {
+    push(@apdu, $imf_tag);
+    my $imf_p = unpack_hex($imf);
+    my $len = scalar(@$imf_p);
+    if($len != 4) {
+      die "IMF must be 4 bytes.";
+    }
+    push(@apdu, $len);
+    foreach my $b (@$imf_p) {
+      push(@apdu, $b);
+    }
+    $apdu[4] += $len + 2;
+  }
   my $repl = send_apdu(\@apdu);
 }
 
@@ -390,6 +406,7 @@ client.pl [options] [action]
   -code=code      unlock-code to send
   -debug          debug mode (show all APDUs sent)
   -time=time      take challenge as time, either now or seconds since epoch (valid for calculate)
+  -imf=imf        initial-moving-factor supposed to be 4 bytes (valid for HOTP put)
 
  Actions:
   -list           list loaded credentials
