@@ -124,6 +124,32 @@ public class OathObjTest {
 		assertEquals(first, second);
 	}
 	
+	@Test
+	public void TestHotpIMF1() {
+		List<byte[]> expected = new ArrayList<byte[]>();
+		expected.add(new byte[] {0x4d, (byte) 0xee, 0x58, 0x64});
+		expected.add(new byte[] {0x25, (byte) 0xc5, 0x33, (byte) 0x92});
+		expected.add(new byte[] {0x5c, 0x22, (byte) 0x81, 0x73});
+		expected.add(new byte[] {0x1b, 0x01, 0x6b, 0x42});
+		expected.add(new byte[] {0x29, (byte) 0x80, (byte) 0xc9, (byte) 0xab});
+		expected.add(new byte[] {0x1d, (byte) 0xc5, (byte) 0xea, (byte) 0xb6});
+		expected.add(new byte[] {0x1e, (byte) 0xd8, (byte) 0xb6, 0x09});
+		expected.add(new byte[] {0x35, 0x54, (byte) 0x96, 0x2a});
+		expected.add(new byte[] {0x08, (byte) 0x94, 0x24, (byte) 0xa0});
+		expected.add(new byte[] {0x6e, (byte) 0xf1, 0x4a, 0x38});
+
+		OathObj obj = new OathObj();
+		byte[] key = "12345678901234567890".getBytes();
+		byte[] imf = new byte[] {0x00, (byte) 0xff, (byte) 0xff, (byte) 0xfe};
+		obj.setKey(key, (short)0, (byte) (OathObj.HOTP_TYPE | OathObj.HMAC_SHA1), (short)key.length);
+		obj.setImf(imf, (short) 0);
+		for(byte[] expect : expected) {
+			byte[] dest = new byte[4];
+			obj.calculateTruncated(new byte[8], (short)0, (short) 8, dest, (short)0);
+			assertArrayEquals(expect, dest);
+		}
+	}
+	
 	/* sha-1 test vectors come from rfc 2202 */
 	@Test
 	public void TestSha1Case1() {
