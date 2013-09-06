@@ -1,5 +1,7 @@
 ykneo-oath NEWS -- History of changes.
 
+* Version 0.2.1 (unreleased)
+
 * Version 0.2.0 (released 2013-09-06)
 
 ** add initial-moving-factor for HOTP
