@@ -178,15 +178,16 @@ if($action eq 'change-code') {
 
 if($action eq 'list') {
   my $repl = send_apdu([0x00, 0xa1, 0x00, 0x00]);
-  if($repl->[0] != $name_list_tag) {
-    die "unknown reply: " . $repl->[0];
-  }
-  my $offs = 1;
-  my $len = get_len($repl, $offs);
-  $offs += get_len_bytes($len);
-  while($offs < ($len)) {
-    printf("%02x : ", $repl->[$offs++]);
+  my $offs = 0;
+  my $len = scalar(@$repl) - 2;
+  while($offs < $len) {
+    if($repl->[$offs] != $name_list_tag) {
+      die "unknown reply: " . $repl->[$offs];
+    }
+    $offs++;
     my $length = get_len($repl, $offs++);
+    printf("%02x : ", $repl->[$offs++]);
+    $length--;
     for(my $i = 0; $i < $length; $i++) {
       print chr($repl->[$offs + $i]);
     }
