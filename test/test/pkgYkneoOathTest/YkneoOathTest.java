@@ -364,6 +364,114 @@ public class YkneoOathTest {
 		assertArrayEquals(secondName.getBytes(), name);
 	}
 	
+	@Test
+	public void testHotpIMFOverwrite() {
+		byte[] key = "kaka".getBytes();
+		byte[] imf = new byte[] {(byte) 0xff, 0x00, (byte) 0xff, (byte) 0xff};
+		byte[] name = "kaka".getBytes();
+		
+		byte[] buf = new byte[256];
+		buf[1] = YkneoOath.PUT_INS;
+		int offs = 5;
+		buf[offs++] = YkneoOath.NAME_TAG;
+		buf[offs++] = (byte) name.length;
+		System.arraycopy(name, 0, buf, offs, name.length);
+		offs += name.length;
+		buf[offs++] = YkneoOath.KEY_TAG;
+		buf[offs++] = (byte) (key.length + 2);
+		buf[offs++] = OathObj.HMAC_SHA1 | OathObj.HOTP_TYPE;
+		buf[offs++] = 6;
+		System.arraycopy(key, 0, buf, offs, key.length);
+		offs += key.length;
+		buf[offs++] = YkneoOath.IMF_TAG;
+		buf[offs++] = (byte) imf.length;
+		System.arraycopy(imf, 0, buf, offs, imf.length);
+		APDU apdu = new APDU(buf);
+		ykneoOath.process(apdu);
+		Arrays.fill(buf, (byte)0);
+		buf[1] = YkneoOath.CALCULATE_INS;
+		buf[3] = 1; // truncate
+		offs = 5;
+		buf[offs++] = YkneoOath.NAME_TAG;
+		buf[offs++] = (byte) name.length;
+		System.arraycopy(name, 0, buf, offs, name.length);
+		offs += name.length;
+		buf[offs++] = YkneoOath.CHALLENGE_TAG;
+		ykneoOath.process(apdu);
+		byte[] expected = new byte[256];
+		offs = 0;
+		expected[offs++] = YkneoOath.T_RESPONSE_TAG;
+		expected[offs++] = 5;
+		expected[offs++] = 6;
+		expected[offs++] = 0x45;
+		expected[offs++] = (byte) 0xd9;
+		expected[offs++] = 0x0f;
+		expected[offs++] = 0x25;
+		assertArrayEquals(expected, buf);
+		Arrays.fill(buf, (byte)0);
+		buf[1] = YkneoOath.CALCULATE_INS;
+		buf[3] = 1; // truncate
+		offs = 5;
+		buf[offs++] = YkneoOath.NAME_TAG;
+		buf[offs++] = (byte) name.length;
+		System.arraycopy(name, 0, buf, offs, name.length);
+		offs += name.length;
+		buf[offs++] = YkneoOath.CHALLENGE_TAG;
+		ykneoOath.process(apdu);
+		offs = 3;
+		expected[offs++] = 0x1b;
+		expected[offs++] = (byte) 0xc5;
+		expected[offs++] = 0x4a;
+		expected[offs++] = (byte) 0x85;
+		assertArrayEquals(expected, buf);
+		
+		Arrays.fill(buf, (byte)0);
+		buf[1] = YkneoOath.PUT_INS;
+		offs = 5;
+		buf[offs++] = YkneoOath.NAME_TAG;
+		buf[offs++] = (byte) name.length;
+		System.arraycopy(name, 0, buf, offs, name.length);
+		offs += name.length;
+		buf[offs++] = YkneoOath.KEY_TAG;
+		buf[offs++] = (byte) (key.length + 2);
+		buf[offs++] = OathObj.HMAC_SHA1 | OathObj.HOTP_TYPE;
+		buf[offs++] = 6;
+		System.arraycopy(key, 0, buf, offs, key.length);
+		ykneoOath.process(apdu);
+		Arrays.fill(buf, (byte)0);
+		buf[1] = YkneoOath.CALCULATE_INS;
+		buf[3] = 1; // truncate..
+		offs = 5;
+		buf[offs++] = YkneoOath.NAME_TAG;
+		buf[offs++] = (byte) name.length;
+		System.arraycopy(name, 0, buf, offs, name.length);
+		offs += name.length;
+		buf[offs++] = YkneoOath.CHALLENGE_TAG;
+		ykneoOath.process(apdu);
+		offs = 3;
+		expected[offs++] = 0x16;
+		expected[offs++] = 0x53;
+		expected[offs++] = 0x24;
+		expected[offs++] = (byte) 0xdb;
+		assertArrayEquals(expected, buf);
+		Arrays.fill(buf, (byte)0);
+		buf[1] = YkneoOath.CALCULATE_INS;
+		buf[3] = 1; // truncate..
+		offs = 5;
+		buf[offs++] = YkneoOath.NAME_TAG;
+		buf[offs++] = (byte) name.length;
+		System.arraycopy(name, 0, buf, offs, name.length);
+		offs += name.length;
+		buf[offs++] = YkneoOath.CHALLENGE_TAG;
+		ykneoOath.process(apdu);
+		offs = 3;
+		expected[offs++] = 0x53;
+		expected[offs++] = (byte) 0xed;
+		expected[offs++] = 0x5e;
+		expected[offs++] = (byte) 0xb2;
+		assertArrayEquals(expected, buf);
+	}
+	
 	private static byte[] hmacSha1(byte[] key, byte[] data) {
 		byte[] ret = null;
         try {
