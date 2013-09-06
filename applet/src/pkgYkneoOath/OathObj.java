@@ -69,7 +69,7 @@ public class OathObj {
 		outer = new byte[hmac_buf_size];
 		
 		if(scratchBuf == null) {
-			scratchBuf = JCSystem.makeTransientByteArray((short) 128, JCSystem.CLEAR_ON_DESELECT);
+			scratchBuf = JCSystem.makeTransientByteArray((short) 32, JCSystem.CLEAR_ON_DESELECT);
 		}
 	}
 	
