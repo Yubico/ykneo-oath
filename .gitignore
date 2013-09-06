@@ -10,3 +10,7 @@
 
 #Build artifacts
 bin/
+ykneo-oath-*.cap
+ykneo-oath-*.cap.sig
+ykneo-oath-*.tar.gz
+ykneo-oath-*.tar.gz.sig
