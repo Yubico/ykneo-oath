@@ -64,8 +64,7 @@ public class YkneoOathTest {
 		assertNull(OathObj.firstObject);
 		ykneoOath.process(listApdu);
 		byte[] buf = listApdu.getBuffer();
-		assertEquals(YkneoOath.NAME_LIST_TAG, buf[0]);
-		assertEquals(0, buf[1]);
+		assertEquals(0, buf[0]);
 	}
 	
 	@Test
@@ -80,7 +79,7 @@ public class YkneoOathTest {
 		assertNotNull(OathObj.firstObject);
 		ykneoOath.process(listApdu);
 		byte[] expect = new byte[256];
-		System.arraycopy(new byte[] {YkneoOath.NAME_LIST_TAG, 6, 0x21, 4, 'k', 'a', 'k', 'a'}, 0, expect, 0, 8);
+		System.arraycopy(new byte[] {YkneoOath.NAME_LIST_TAG, 5, 0x21, 'k', 'a', 'k', 'a'}, 0, expect, 0, 7);
 		assertArrayEquals(expect, listApdu.getBuffer());
 		
 		byte[] buf = new byte[256];
@@ -120,7 +119,7 @@ public class YkneoOathTest {
 		assertNull(OathObj.firstObject.nextObject);
 		ykneoOath.process(listApdu);
 		byte[] expect = new byte[256];
-		System.arraycopy(new byte[] {(byte) YkneoOath.NAME_LIST_TAG, 6, 0x21, 4, 'k', 'a', 'k', 'a'}, 0, expect, 0, 8);
+		System.arraycopy(new byte[] {(byte) YkneoOath.NAME_LIST_TAG, 5, 0x21, 'k', 'a', 'k', 'a'}, 0, expect, 0, 7);
 		assertArrayEquals(expect, listApdu.getBuffer());
 
 		byte[] buf = new byte[256];
@@ -147,7 +146,7 @@ public class YkneoOathTest {
 		Arrays.fill(listBuf, (byte)0x00);
 		listBuf[1] = YkneoOath.LIST_INS;
 		ykneoOath.process(listApdu);
-		System.arraycopy(new byte[] {YkneoOath.NAME_LIST_TAG, 6, 0x21, 4, 'k', 'a', 'k', 'a'}, 0, expect, 0, 8);
+		System.arraycopy(new byte[] {YkneoOath.NAME_LIST_TAG, 5, 0x21, 'k', 'a', 'k', 'a'}, 0, expect, 0, 7);
 		assertArrayEquals(expect, listApdu.getBuffer());
 		
 		Arrays.fill(buf, (byte)0);
@@ -314,11 +313,16 @@ public class YkneoOathTest {
 		byte[] list = listApdu.getBuffer();
 		offs = 0;
 		assertEquals(YkneoOath.NAME_LIST_TAG, list[offs++]);
-		assertEquals((firstName.length() + 2) * 2, list[offs++]);
+		assertEquals(firstName.length() + 1, list[offs++]);
+		assertEquals(type, list[offs++]);
 		byte[] name = new byte[3];
-		System.arraycopy(list, 4, name, 0, 3);
+		System.arraycopy(list, offs, name, 0, firstName.length());
 		assertArrayEquals(firstName.getBytes(), name);
-		System.arraycopy(list, 9, name, 0, 3);
+		offs += firstName.length();
+		assertEquals(YkneoOath.NAME_LIST_TAG, list[offs++]);
+		assertEquals(secondName.length() + 1, list[offs++]);
+		assertEquals(type, list[offs++]);
+		System.arraycopy(list, offs, name, 0, secondName.length());
 		assertArrayEquals(secondName.getBytes(), name);
 		Arrays.fill(buf, (byte)0);
 		buf[1] = YkneoOath.DELETE_INS;
@@ -332,8 +336,9 @@ public class YkneoOathTest {
 		ykneoOath.process(listApdu);
 		offs = 0;
 		assertEquals(YkneoOath.NAME_LIST_TAG, list[offs++]);
-		assertEquals(secondName.length() + 2, list[offs++]);
-		System.arraycopy(list, 4, name, 0, 3);
+		assertEquals(secondName.length() + 1, list[offs++]);
+		assertEquals(type, list[offs++]);
+		System.arraycopy(list, offs, name, 0, 3);
 		assertArrayEquals(secondName.getBytes(), name);
 		Arrays.fill(buf, (byte)0);
 		buf[1] = YkneoOath.PUT_INS;
@@ -353,12 +358,15 @@ public class YkneoOathTest {
 		ykneoOath.process(listApdu);
 		offs = 0;
 		assertEquals(YkneoOath.NAME_LIST_TAG, list[offs++]);
-		assertEquals(secondName.length() + 2 + thirdName.length() + 2, list[offs++]);
-		offs += 2;
+		assertEquals(thirdName.length() + 1, list[offs++]);
+		assertEquals(type, list[offs++]);
 		name = new byte[thirdName.length()];
 		System.arraycopy(list, offs, name, 0, thirdName.length());
-		offs += thirdName.length() + 2;
 		assertArrayEquals(thirdName.getBytes(), name);
+		offs += thirdName.length();
+		assertEquals(YkneoOath.NAME_LIST_TAG, list[offs++]);
+		assertEquals(secondName.length() + 1, list[offs++]);
+		assertEquals(type, list[offs++]);
 		name = new byte[secondName.length()];
 		System.arraycopy(list, offs, name, 0, secondName.length());
 		assertArrayEquals(secondName.getBytes(), name);

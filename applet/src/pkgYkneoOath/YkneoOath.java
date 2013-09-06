@@ -361,23 +361,18 @@ public class YkneoOath extends Applet {
 	}
 
 	private short handleList(byte[] output) {
-		short len = 0;
-		OathObj object = OathObj.firstObject;
-		while(object != null) {
+		short offs = 0;
+		OathObj object;
+		for(object = OathObj.firstObject; object != null; object = object.nextObject) {
 			if(!object.isActive()) {
-				object = object.nextObject;
 				continue;
 			}
-			tempBuf[len++] = object.getType();
-			len += setLength(tempBuf, len, object.getNameLength());
-			len += object.getName(tempBuf, len);
-			object = object.nextObject;
+			output[offs++] = NAME_LIST_TAG;
+			output[offs++] = (byte) (object.getNameLength() + 1);
+			output[offs++] = object.getType();
+			offs += object.getName(output, offs);
 		}
-		
-		short offs = 0;
-		output[offs++] = NAME_LIST_TAG;
-		offs += setLength(output, offs, len);
-		return Util.arrayCopy(tempBuf, _0, output, offs, len);
+		return offs;
 	}
 
 	private void handleDelete(byte[] buf) {
