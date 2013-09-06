@@ -66,6 +66,7 @@ public class YkneoOath extends Applet {
 	private static final byte PROP_BUF_SIZE = PROP_REMAINING_DATA_LEN + 2;
 	
 	private static final short BUFSIZE = 2048;
+	private static final short TMP_BUFSIZE = 32;
 	
 	private RandomData rng;
 	
@@ -74,7 +75,7 @@ public class YkneoOath extends Applet {
 	private static final byte[] version = {0x00,0x01,0x01};
 
 	public YkneoOath() {
-		tempBuf = JCSystem.makeTransientByteArray((short) 64, JCSystem.CLEAR_ON_DESELECT);
+		tempBuf = JCSystem.makeTransientByteArray((short) TMP_BUFSIZE, JCSystem.CLEAR_ON_DESELECT);
 		sendBuffer = JCSystem.makeTransientByteArray(BUFSIZE, JCSystem.CLEAR_ON_DESELECT);
 		propBuf = JCSystem.makeTransientByteArray(PROP_BUF_SIZE, JCSystem.CLEAR_ON_DESELECT);
 		rng = RandomData.getInstance(RandomData.ALG_PSEUDO_RANDOM);
