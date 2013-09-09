@@ -73,6 +73,7 @@ pod2usage(1) if $help;
 my $reader;
 
 my $rContext = new Chipcard::PCSC;
+die ("Can't create the PCSC object: $Chipcard::PCSC::errno\n") unless (defined $rContext);
 my @readers = $rContext->ListReaders();
 foreach my $read (@readers) {
   if(defined($readerMatch)) {
