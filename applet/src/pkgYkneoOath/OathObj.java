@@ -157,12 +157,11 @@ public class OathObj {
 	}
 	
 	public static OathObj getFreeObject() {
-		OathObj object = firstObject;
-		while(object != null) {
+		OathObj object;
+		for(object = firstObject; object != null; object = object.nextObject) {
 			if(!object.isActive()) {
 				break;
 			}
-			object = object.nextObject;
 		}
 		if(object == null) {
 			object = new OathObj();
@@ -172,16 +171,14 @@ public class OathObj {
 	}
 	
 	public static OathObj findObject(byte[] name, short offs, short len) {
-		OathObj object = firstObject;
-		while(object != null) {
+		OathObj object;
+		for(object = firstObject; object != null; object = object.nextObject) {
 			if(!object.isActive() || len != object.nameLen) {
-				object = object.nextObject;
 				continue;
 			}
 			if(Util.arrayCompare(name, offs, object.name, _0, len) == 0) {
 				break;
 			}
-			object = object.nextObject;
 		}
 		return object;
 	}

@@ -331,10 +331,9 @@ public class YkneoOath extends Applet {
 		Util.arrayCopyNonAtomic(challenge, offs, tempBuf, _0, chalLen);
 
 		offs = 0;
-		OathObj obj = OathObj.firstObject;
-		while(obj != null) {
+		OathObj obj;
+		for(obj = OathObj.firstObject; obj != null; obj = obj.nextObject) {
 			if(!obj.isActive()) {
-				obj = obj.nextObject;
 				continue;
 			}
 			output[offs++] = NAME_TAG;
@@ -350,13 +349,11 @@ public class YkneoOath extends Applet {
 					len = obj.calculateTruncated(tempBuf, _0, chalLen, output, (short) (offs + 2));
 				}
 			} else {
-
 				output[offs++] = NO_RESPONSE_TAG;
 			}
 			output[offs++] = (byte) (len + 1);
 			output[offs++] = obj.getDigits();
 			offs += len;
-			obj = obj.nextObject;
 		}
 		return offs;
 	}
@@ -393,14 +390,12 @@ public class YkneoOath extends Applet {
 	
 	private short calculateTotalLen() {
 		short res = 0;
-		OathObj obj = OathObj.firstObject;
-		while(obj != null) {
+		OathObj obj;
+		for(obj = OathObj.firstObject; obj != null; obj = obj.nextObject) {
 			if(!obj.isActive()) {
-				obj = obj.nextObject;
 				continue;
 			}
 			res += obj.getNameLength() + 9; // data and bytes add up to 9
-			obj = obj.nextObject;
 		}
 		return res;
 	}
