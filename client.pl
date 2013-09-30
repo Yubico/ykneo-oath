@@ -72,7 +72,7 @@ pod2usage(1) if $help;
 
 my $reader;
 
-my $rContext = new Chipcard::PCSC;
+my $rContext = Chipcard::PCSC->new;
 die ("Can't create the PCSC object: $Chipcard::PCSC::errno\n") unless (defined $rContext);
 my @readers = $rContext->ListReaders();
 foreach my $read (@readers) {
@@ -88,7 +88,7 @@ foreach my $read (@readers) {
 die "No reader found." unless $reader;
 print "Using reader $reader\n" if $debug;
 
-my $card = new Chipcard::PCSC::Card($rContext, $reader, $Chipcard::PCSC::SCARD_SHARE_SHARED);
+my $card = Chipcard::PCSC::Card->new($rContext, $reader, $Chipcard::PCSC::SCARD_SHARE_SHARED);
 die "Card connection failed." unless $card;
 
 # select applet
@@ -340,6 +340,7 @@ sub get_len_bytes {
 sub set_action {
   my ($opt_name, $opt_value) = @_;
   $action = $opt_name;
+  return;
 }
 
 sub unpack_hex {
