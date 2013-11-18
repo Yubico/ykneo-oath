@@ -216,7 +216,7 @@ public class OathObj {
 			buf = chal;
 		} else if((type & OATH_MASK) == HOTP_TYPE) {
 			Util.arrayFillNonAtomic(scratchBuf, _0, (short)8, (byte)0);
-			if(imf == null || (imf[0] == 0 && imf[1] == 0)) {
+			if(imf == null || (imf[0] == 0 && imf[1] == 0 && imf[2] == 0 && imf[3] == 0)) {
 				Util.setShort(scratchBuf, (short) 6, counter);
 			} else {
 				Util.arrayCopyNonAtomic(imf, _0, scratchBuf, (short)4, IMF_LEN);
