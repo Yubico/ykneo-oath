@@ -180,17 +180,29 @@ if($action eq 'change-code') {
 if($action eq 'list') {
   my $repl = send_apdu([0x00, 0xa1, 0x00, 0x00]);
   my $offs = 0;
-  my $len = scalar(@$repl) - 2;
+  my $len = scalar(@$repl);
+  my @output;
+  for(my $i = 0; $i < ($len - 2); $i++) {
+    push(@output, $repl->[$i]);
+  }
+  while($repl->[$len - 2] == 97) {
+    $repl = send_apdu([0x00, 0xa5, 0x00, 0x00]);
+    $len = scalar(@$repl);
+    for(my $i = 0; $i < ($len - 2); $i++) {
+      push(@output, $repl->[$i]);
+    }
+  }
+  $len = scalar(@output) - 2;
   while($offs < $len) {
-    if($repl->[$offs] != $name_list_tag) {
-      die "unknown reply: " . $repl->[$offs];
+    if($output[$offs] != $name_list_tag) {
+      die "unknown reply: " . $output[$offs];
     }
     $offs++;
-    my $length = get_len($repl, $offs++);
-    printf("%02x : ", $repl->[$offs++]);
+    my $length = get_len(\@output, $offs++);
+    printf("%02x : ", $output[$offs++]);
     $length--;
     for(my $i = 0; $i < $length; $i++) {
-      print chr($repl->[$offs + $i]);
+      print chr($output[$offs + $i]);
     }
     print "\n";
     $offs += $length;
