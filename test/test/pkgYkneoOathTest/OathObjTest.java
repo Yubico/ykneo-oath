@@ -20,12 +20,17 @@ package pkgYkneoOathTest;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.fail;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import javacard.framework.ISOException;
 
@@ -337,6 +342,41 @@ public class OathObjTest {
 			byte[] chal = new byte[8];
 			obj.calculateTruncated(chal, (short)0, (short) 8, result, (short)0);
 			assertArrayEquals("at number " + i, expecteds.get(i), result);
+		}
+	}
+	
+	@Test
+	public void TestHugeHotp() {
+		Properties props = new Properties();
+		InputStream in = getClass().getResourceAsStream("/testdata.properties");
+		if(in == null) {
+			fail("couldn't find testdata.properties.");
+		}
+		try {
+			props.load(in);
+		} catch (IOException e) {
+			fail("failed to load testdata.properties: " + e.getMessage());
+		}
+		
+		List<String> keys = new ArrayList<String>(props.stringPropertyNames());
+		Collections.sort(keys);
+		
+		OathObj obj = OathObj.getFreeObject();
+		obj.setKey(new byte[] {'b', 'l', 'a', 'h', 'o', 'n', 'g', 'a'},
+				(short) 0, (byte) (OathObj.HOTP_TYPE | OathObj.HMAC_SHA1), (short)8);
+		obj.setImf(new byte[] {0xf, (byte) 0xff, (byte) 0xff, (byte) 0xff}, (short)0);
+		
+		for(String key : keys) {
+			int value = Integer.parseInt(props.getProperty(key));
+			byte[] expected = new byte[4];
+			expected[0] = (byte) (value >>> 24);
+			expected[1] = (byte) (value >>> 16);
+			expected[2] = (byte) (value >>> 8);
+			expected[3] = (byte) value;
+			
+			byte[] result = new byte[4];
+			obj.calculateTruncated(new byte[] {}, (short)0, (short)0, result, (short)0);
+			assertArrayEquals(expected, result);
 		}
 	}
 }

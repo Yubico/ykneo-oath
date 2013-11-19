@@ -6,6 +6,7 @@
   <property name="test.src" location="test/test"/>
   <property name="test.mock" location="test/mock"/>
   <property name="test.build" location="test/bin"/>
+  <property name="test.resources" location="test/resources"/>
   <!-- Load user specified extra properties -->
   <property file="${user.home}/javacard.properties"/>
   <property name="JAVA_PACKAGE" value="pkgYkneoOath"/>
@@ -55,6 +56,7 @@
   <target name="test" description="run tests" depends="compileTest">
     <junit printSummary="no" fork="yes" failureproperty="junit.failure">
       <classpath>
+        <pathelement location="${test.resources}"/>
         <pathelement location="${test.build}"/>
         <pathelement path="${build}"/>
         <pathelement location="/usr/share/java/junit4.jar"/>
