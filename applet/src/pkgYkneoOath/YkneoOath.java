@@ -72,7 +72,7 @@ public class YkneoOath extends Applet {
 	
 	private byte[] identity;
 	
-	private static final byte[] version = {0x00,0x02,0x01};
+	private static final byte[] version = {0x00,0x02,0x02};
 
 	public YkneoOath() {
 		tempBuf = JCSystem.makeTransientByteArray((short) TMP_BUFSIZE, JCSystem.CLEAR_ON_DESELECT);

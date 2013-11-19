@@ -1,5 +1,7 @@
 ykneo-oath NEWS -- History of changes.
 
+* Version 0.2.2 (unreleased)
+
 * Version 0.2.1 (released 2013-11-19)
 
 ** fix issue with IMF where it wasn't used if it was less than 0xffff0000
