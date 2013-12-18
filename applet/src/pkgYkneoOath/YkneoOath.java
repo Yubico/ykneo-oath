@@ -26,7 +26,6 @@ import javacard.framework.Util;
 import javacard.security.RandomData;
 
 public class YkneoOath extends Applet {
-
 	public static final byte NAME_TAG = 0x71;
     public static final byte NAME_LIST_TAG = 0x72;
     public static final byte KEY_TAG = 0x73;
@@ -73,7 +72,7 @@ public class YkneoOath extends Applet {
 	private byte[] identity;
 	
 	private static final byte[] version = {0x00,0x02,0x02};
-
+		
 	public YkneoOath() {
 		tempBuf = JCSystem.makeTransientByteArray((short) TMP_BUFSIZE, JCSystem.CLEAR_ON_DESELECT);
 		sendBuffer = JCSystem.makeTransientByteArray(BUFSIZE, JCSystem.CLEAR_ON_DESELECT);

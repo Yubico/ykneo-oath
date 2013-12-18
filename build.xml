@@ -4,9 +4,9 @@
   <property name="src" location="applet/src"/>
   <property name="build" location="applet/bin"/>
   <property name="test.src" location="test/test"/>
-  <property name="test.mock" location="test/mock"/>
   <property name="test.build" location="test/bin"/>
   <property name="test.resources" location="test/resources"/>
+  <property name="test.lib" location="test/lib"/>
   <!-- Load user specified extra properties -->
   <property file="${user.home}/javacard.properties"/>
   <property name="JAVA_PACKAGE" value="pkgYkneoOath"/>
@@ -45,11 +45,13 @@
     <delete dir="${test.build}"/>
   </target>
   <target name="compileTest" depends="compile">
-    <javac srcdir="${test.mock}" destdir="${test.build}" includeantruntime="false"/>
     <javac srcdir="${test.src}" destdir="${test.build}" includeantruntime="false">
       <classpath>
         <pathelement path="${build}"/>
         <pathelement location="/usr/share/java/junit4.jar"/>
+        <fileset dir="${test.lib}">
+          <include name="*.jar"/>
+        </fileset>
       </classpath>
     </javac>
   </target>
@@ -60,6 +62,9 @@
         <pathelement location="${test.build}"/>
         <pathelement path="${build}"/>
         <pathelement location="/usr/share/java/junit4.jar"/>
+        <fileset dir="${test.lib}">
+          <include name="*.jar"/>
+        </fileset>
       </classpath>
       <formatter type="plain" usefile="false" />
       <formatter type="plain" />

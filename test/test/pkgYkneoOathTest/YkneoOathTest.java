@@ -28,6 +28,7 @@ import java.security.Key;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 
+import javacard.framework.AID;
 import javacard.framework.APDU;
 
 import javax.crypto.Mac;
@@ -35,15 +36,20 @@ import javax.crypto.spec.SecretKeySpec;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
+
+import com.licel.jcardsim.base.Simulator;
 
 import pkgYkneoOath.OathObj;
 import pkgYkneoOath.YkneoOath;
 
 public class YkneoOathTest {
-	YkneoOath ykneoOath;
-	
-	APDU listApdu;
+	Simulator simulator;
+	static final byte[] oathAid = new byte[] {(byte) 0xa0, 0x00, 0x00, 0x05, 0x27, 0x21, 0x01, 0x01};
+	static final byte[] listApdu = new byte[] {0x00, YkneoOath.LIST_INS, 0x00, 0x00};
+	static final AID aid = new AID(oathAid, (short)0, (byte)oathAid.length);
+
 	
 	@After
 	public void tearDown() {
@@ -53,116 +59,94 @@ public class YkneoOathTest {
 	
 	@Before
 	public void setup() {
-		ykneoOath = new YkneoOath();
-		byte[] list = new byte[256];
-		list[1] = (byte) YkneoOath.LIST_INS;
-		listApdu = new APDU(list);
+		byte[] params = new byte[oathAid.length + 1];
+		params[0] = (byte) oathAid.length;
+		System.arraycopy(oathAid, 0, params, 1, oathAid.length);
+		
+		simulator = new Simulator();
+		simulator.resetRuntime();
+		simulator.installApplet(aid, YkneoOath.class, params, (short)0, (byte) params.length);
+		simulator.selectApplet(aid);
 	}
 	
 	@Test
 	public void testEmptyList() {
 		assertNull(OathObj.firstObject);
-		ykneoOath.process(listApdu);
-		byte[] buf = listApdu.getBuffer();
-		assertEquals(0, buf[0]);
+		byte[] resp = simulator.transmitCommand(listApdu);
+		assertArrayEquals(new byte[] {(byte) 0x90, 0x00}, resp);
 	}
 	
 	@Test
 	public void testLife() {
-		APDU putApdu = new APDU(new byte[] {
+		assertNull(OathObj.firstObject);
+		byte[] resp = simulator.transmitCommand(new byte[] {
 				0x00, YkneoOath.PUT_INS, 0x00, 0x00, 0x1d,
 				YkneoOath.NAME_TAG, 0x04, 'k', 'a', 'k', 'a',
 				YkneoOath.KEY_TAG, 0x16, 0x21, 0x06, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b
 		});
-		assertNull(OathObj.firstObject);
-		ykneoOath.process(putApdu);
 		assertNotNull(OathObj.firstObject);
-		ykneoOath.process(listApdu);
-		byte[] expect = new byte[256];
-		System.arraycopy(new byte[] {YkneoOath.NAME_LIST_TAG, 5, 0x21, 'k', 'a', 'k', 'a'}, 0, expect, 0, 7);
-		assertArrayEquals(expect, listApdu.getBuffer());
+		resp = simulator.transmitCommand(listApdu);
+		byte[] expect = new byte[] {YkneoOath.NAME_LIST_TAG, 5, 0x21, 'k', 'a', 'k', 'a', (byte) 0x90, 0x00};
+		assertArrayEquals(expect, resp);
 		
-		byte[] buf = new byte[256];
-		System.arraycopy(new byte[] {
-			0x00, YkneoOath.CALCULATE_INS, 0x00, 0x00, 0x10,
-			YkneoOath.NAME_TAG, 0x04, 'k', 'a', 'k', 'a',
-			YkneoOath.CHALLENGE_TAG, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01}, 0, buf, 0, 21
-			);
-		
-		APDU calcApdu = new APDU(buf);
-		ykneoOath.process(calcApdu);
-		byte[] expected = new byte[256];
-		System.arraycopy(new byte[]{
+		resp = simulator.transmitCommand(new byte[] {
+				0x00, YkneoOath.CALCULATE_INS, 0x00, 0x00, 0x10,
+				YkneoOath.NAME_TAG, 0x04, 'k', 'a', 'k', 'a',
+				YkneoOath.CHALLENGE_TAG, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01});
+		byte[] expected = new byte[]{
 				YkneoOath.RESPONSE_TAG, 0x15, 0x06, (byte) 0xb3, (byte) 0x99, (byte) 0xbd, (byte) 0xfc, (byte) 0x9d, 0x05, (byte) 0xd1, 0x2a, (byte) 0xc4, 0x35, (byte) 0xc4,
-				(byte) 0xc8, (byte) 0xd6, (byte) 0xcb, (byte) 0xd2, 0x47, (byte) 0xc4, 0x0a, 0x30, (byte) 0xf1}, 0, expected, 0, 23);
-		assertArrayEquals(expected, buf);
+				(byte) 0xc8, (byte) 0xd6, (byte) 0xcb, (byte) 0xd2, 0x47, (byte) 0xc4, 0x0a, 0x30, (byte) 0xf1, (byte) 0x90, 0x00};
+		assertArrayEquals(expected, resp);
 		
-		APDU delApdu = new APDU(new byte[] {
+		simulator.transmitCommand(new byte[] {
 				0x00, YkneoOath.DELETE_INS, 0x00, 0x00, 0x06, YkneoOath.NAME_TAG, 0x04, 0x6b, 0x61, 0x6b, 0x61
 		});
-		ykneoOath.process(delApdu);
 		assertEquals(false, OathObj.firstObject.isActive());
 	}
 	
 	@Test
 	public void testOverwrite() {
-		APDU putApdu = new APDU(new byte[] {
-			0x00, YkneoOath.PUT_INS, 0x00, 0x00, 0x1f,
-			YkneoOath.NAME_TAG, 0x04, 'k', 'a', 'k', 'a',
-			YkneoOath.KEY_TAG, 0x16, 0x21, 0x06, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b,
-			YkneoOath.PROPERTY_TAG, 0x01
-		});
-
+		byte[] putApdu = new byte[] {
+				0x00, YkneoOath.PUT_INS, 0x00, 0x00, 0x1f,
+				YkneoOath.NAME_TAG, 0x04, 'k', 'a', 'k', 'a',
+				YkneoOath.KEY_TAG, 0x16, 0x21, 0x06, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b,
+				YkneoOath.PROPERTY_TAG, 0x01 };
+		
 		assertNull(OathObj.firstObject);
-		ykneoOath.process(putApdu);
+		simulator.transmitCommand(putApdu);
 		assertNotNull(OathObj.firstObject);
 		assertNull(OathObj.firstObject.nextObject);
-		ykneoOath.process(listApdu);
-		byte[] expect = new byte[256];
-		System.arraycopy(new byte[] {(byte) YkneoOath.NAME_LIST_TAG, 5, 0x21, 'k', 'a', 'k', 'a'}, 0, expect, 0, 7);
-		assertArrayEquals(expect, listApdu.getBuffer());
+		byte[] resp = simulator.transmitCommand(listApdu);
+		byte[] expect = new byte[] {(byte) YkneoOath.NAME_LIST_TAG, 5, 0x21, 'k', 'a', 'k', 'a', (byte) 0x90, 0x00};
+		assertArrayEquals(expect, resp);
 
-		byte[] buf = new byte[256];
-		System.arraycopy(new byte[] {
+		resp = simulator.transmitCommand(new byte[] {
 				0x00, YkneoOath.CALCULATE_INS, 0x00, 0x00, 0x10,
 				YkneoOath.NAME_TAG, 0x04, 'k', 'a', 'k', 'a',
-				YkneoOath.CHALLENGE_TAG, 0x08, (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff},
-				0, buf, 0, 21);
-		APDU calcApdu = new APDU(buf);
-		ykneoOath.process(calcApdu);
-		byte[] expected = new byte[256];
-		System.arraycopy(new byte[]{
+				YkneoOath.CHALLENGE_TAG, 0x08, (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff }
+		);
+		expect = new byte[]{
 				YkneoOath.RESPONSE_TAG, 0x15, 0x06, 0x79, 0x3e, 0x1b, (byte) 0xbd, (byte) 0xbf, (byte) 0xa7, 0x75, (byte) 0xa8, 0x63,(byte) 0xcc,
-				(byte) 0x80, 0x02, (byte) 0xce, (byte) 0xe4, (byte) 0xbd, 0x6c, (byte) 0xd7, (byte) 0xce, (byte) 0xb8, (byte) 0xcd},
-				0, expected, 0, 23);
-		assertArrayEquals(expected, buf);
-		ykneoOath.process(putApdu);
+				(byte) 0x80, 0x02, (byte) 0xce, (byte) 0xe4, (byte) 0xbd, 0x6c, (byte) 0xd7, (byte) 0xce, (byte) 0xb8, (byte) 0xcd, (byte) 0x90, 0x00};
+		assertArrayEquals(expect, resp);
+		simulator.transmitCommand(putApdu);
 		
 		// make sure there is only one object after overwrite
 		assertEquals(OathObj.firstObject, OathObj.lastObject);
 		assertNull(OathObj.firstObject.nextObject);
 		
-		byte[] listBuf = listApdu.getBuffer();
-		Arrays.fill(listBuf, (byte)0x00);
-		listBuf[1] = YkneoOath.LIST_INS;
-		ykneoOath.process(listApdu);
-		System.arraycopy(new byte[] {YkneoOath.NAME_LIST_TAG, 5, 0x21, 'k', 'a', 'k', 'a'}, 0, expect, 0, 7);
-		assertArrayEquals(expect, listApdu.getBuffer());
+		resp = simulator.transmitCommand(listApdu);
+		expect = new byte[] {YkneoOath.NAME_LIST_TAG, 5, 0x21, 'k', 'a', 'k', 'a', (byte) 0x90, 0x00};
+		assertArrayEquals(expect, resp);
 		
-		Arrays.fill(buf, (byte)0);
-		System.arraycopy(new byte[] {
+		resp = simulator.transmitCommand(new byte[] {
 				0x00, YkneoOath.CALCULATE_INS, 0x00, 0x00, 0x10,
 				YkneoOath.NAME_TAG, 0x04, 'k', 'a', 'k', 'a',
-				YkneoOath.CHALLENGE_TAG, 0x08, (byte) 0xff, (byte) 0x00, (byte) 0xff, (byte) 0x00, (byte) 0xff, (byte) 0x00, (byte) 0xff, (byte) 0x00},
-				0, buf, 0, 21);
-		calcApdu = new APDU(buf);
-		ykneoOath.process(calcApdu);
-		Arrays.fill(expected, (byte)0);
-		System.arraycopy(new byte[] {
+				YkneoOath.CHALLENGE_TAG, 0x08, (byte) 0xff, (byte) 0x00, (byte) 0xff, (byte) 0x00, (byte) 0xff, (byte) 0x00, (byte) 0xff, (byte) 0x00});
+		expect = new byte[] {
 				YkneoOath.RESPONSE_TAG, 0x15, 0x06, 0x3b, 0x0e, 0x3c, 0x63, 0x1c, 0x01, 0x67, (byte) 0xb0, (byte) 0x93, (byte) 0xa5,
-				(byte) 0xec, (byte) 0xb9, 0x09, 0x7d, 0x0b, (byte) 0x8e, (byte) 0x9a, (byte) 0xcc, 0x2f, 0x7f
-		}, 0, expected, 0, 23);
-		assertArrayEquals(expected, buf);
+				(byte) 0xec, (byte) 0xb9, 0x09, 0x7d, 0x0b, (byte) 0x8e, (byte) 0x9a, (byte) 0xcc, 0x2f, 0x7f, (byte) 0x90, 0x00 };
+		assertArrayEquals(expect, resp);
 	}
 	
 	@Test
@@ -186,15 +170,14 @@ public class YkneoOathTest {
 		buf[offs++] = (byte) resp.length;
 		System.arraycopy(resp, 0, buf, offs, resp.length);
 		
-		APDU apdu = new APDU(buf);
-		ykneoOath.process(apdu);
+		simulator.transmitCommand(buf);
 		
 		Arrays.fill(buf, (byte)0);
-		ykneoOath.mockSelectApplet(true);
-		ykneoOath.process(apdu);
+		simulator.reset();
+		resp = simulator.selectAppletWithResult(aid);
 		offs = 15;
-		assertEquals(YkneoOath.CHALLENGE_TAG, buf[offs++]);
-		assertEquals(0x08, buf[offs++]);
+		assertEquals(YkneoOath.CHALLENGE_TAG, resp[offs++]);
+		assertEquals(0x08, resp[offs++]);
 		byte[] data = new byte[8];
 		System.arraycopy(buf, offs, data, 0, 8);
 		byte[] resp2 = hmacSha1(key, data);
@@ -209,78 +192,29 @@ public class YkneoOathTest {
 		buf[offs++] = YkneoOath.CHALLENGE_TAG;
 		buf[offs++] = (byte) chal.length;
 		System.arraycopy(chal, 0, buf, offs, chal.length);
-		ykneoOath.process(apdu);
+		simulator.transmitCommand(buf);
 	}
 	
 	@Test
 	public void testBothOath() {
-		byte[] key = new byte[] {'f', 'o', 'o', ' ', 'b', 'a', 'r'};
-		byte[] totpName = new byte[] {'t', 'o', 't', 'p'};
-		byte[] hotpName = new byte[] {'h', 'o', 't', 'p'};
-		byte[] buf = new byte[256];
 		byte digits = 6;
-		buf[1] = YkneoOath.PUT_INS;
-		int offs = 5;
-		buf[offs++] = YkneoOath.NAME_TAG;
-		buf[offs++] = (byte) totpName.length;
-		System.arraycopy(totpName, 0, buf, offs, totpName.length);
-		offs += totpName.length;
-		buf[offs++] = YkneoOath.KEY_TAG;
-		buf[offs++] = (byte) (key.length + 2);
-		buf[offs++] = OathObj.TOTP_TYPE | OathObj.HMAC_SHA1;
-		buf[offs++] = digits;
-		System.arraycopy(key, 0, buf, offs, key.length);
-		offs += key.length;
-		APDU apdu = new APDU(buf);
-		ykneoOath.process(apdu);
+		byte[] buf = new byte[] {0x00, YkneoOath.PUT_INS, 0x00, 0x00, 0, YkneoOath.NAME_TAG, 0x04, 't', 'o', 't', 'p',
+				YkneoOath.KEY_TAG, 0x09, OathObj.TOTP_TYPE | OathObj.HMAC_SHA1, digits, 'f', 'o', 'o', ' ', 'b', 'a', 'r'};
+		simulator.transmitCommand(buf);
 		buf[7] = 'h';
 		buf[13] = OathObj.HOTP_TYPE | OathObj.HMAC_SHA1;
-		ykneoOath.process(apdu);
+		simulator.transmitCommand(buf);
 		
-		byte[] chal = new byte[] {0x00, 0x00, 0x00, 0x00, 0x02, (byte) 0xbc, (byte) 0xad, (byte) 0xc8};
-		byte[] resp = new byte[] {0x3d, (byte) 0xc6, (byte) 0xbf, 0x3d};
-		Arrays.fill(buf, (byte)0);
-		buf[1] = YkneoOath.CALCULATE_ALL_INS;
-		buf[3] = 1;
-		buf[5] = YkneoOath.CHALLENGE_TAG;
-		buf[6] = (byte) chal.length;
-		System.arraycopy(chal, 0, buf, 7, chal.length);
-		ykneoOath.process(apdu);
+		byte[] chal = new byte[] {0x00, YkneoOath.CALCULATE_ALL_INS, 0x00, 0x01, 0xa, YkneoOath.CHALLENGE_TAG, 0x08, 0x00, 0x00, 0x00, 0x00, 0x02, (byte) 0xbc, (byte) 0xad, (byte) 0xc8};
+		byte[] expected = new byte[] {YkneoOath.NAME_TAG, 0x04, 't', 'o', 't', 'p', YkneoOath.T_RESPONSE_TAG, 0x05, digits, 0x3d, (byte) 0xc6, (byte) 0xbf, 0x3d,
+				YkneoOath.NAME_TAG, 0x04, 'h', 'o', 't', 'p', YkneoOath.NO_RESPONSE_TAG, 0x01, digits, (byte) 0x90, 0x00};
+		byte []	resp = simulator.transmitCommand(chal);
+		assertArrayEquals(expected, resp);
 		
-		byte[] buf2 = new byte[256];
-		offs = 0;
-		buf2[offs++] = YkneoOath.NAME_TAG;
-		buf2[offs++] = (byte) totpName.length;
-		System.arraycopy(totpName, 0, buf2, offs, totpName.length);
-		offs += totpName.length;
-		buf2[offs++] = YkneoOath.T_RESPONSE_TAG;
-		buf2[offs++] = (byte) (resp.length + 1);
-		buf2[offs++] = digits;
-		System.arraycopy(resp, 0, buf2, offs, resp.length);
-		offs += resp.length;
-		buf2[offs++] = YkneoOath.NAME_TAG;
-		buf2[offs++] = (byte) hotpName.length;
-		System.arraycopy(hotpName, 0, buf2, offs, hotpName.length);
-		offs += hotpName.length;
-		buf2[offs++] = YkneoOath.NO_RESPONSE_TAG;
-		buf2[offs++] = 0x01;
-		buf2[offs++] = digits;
-		assertArrayEquals(buf2, buf);
-		
-		Arrays.fill(buf, (byte)0);
-		buf[1] = YkneoOath.CALCULATE_INS;
-		buf[3] = 1;
-		offs = 5;
-		buf[offs++] = YkneoOath.NAME_TAG;
-		buf[offs++] = (byte) hotpName.length;
-		System.arraycopy(hotpName, 0, buf, offs, hotpName.length);
-		offs += hotpName.length;
-		buf[offs++] = YkneoOath.CHALLENGE_TAG;
-		ykneoOath.process(apdu);
-		byte[] expect = new byte[] {0x17, (byte) 0xfa, 0x2d, 0x40};
-		resp = new byte[4];
-		System.arraycopy(buf, 3, resp, 0, resp.length);
-		assertArrayEquals(expect, resp);
+		chal = new byte[] {0x00, YkneoOath.CALCULATE_INS, 0x00, 0x01, 0x07, YkneoOath.NAME_TAG, 0x04, 'h', 'o', 't', 'p', YkneoOath.CHALLENGE_TAG};
+		resp = simulator.transmitCommand(chal);
+		expected = new byte[] {YkneoOath.T_RESPONSE_TAG, 0x05, digits, 0x17, (byte) 0xfa, 0x2d, 0x40, (byte) 0x90, 0x00};
+		assertArrayEquals(expected, resp);
 	}
 	
 	@Test
@@ -304,13 +238,11 @@ public class YkneoOathTest {
 		buf[offs++] = type;
 		buf[offs++] = 6;
 		System.arraycopy(key.getBytes(), 0, buf, offs, key.length());
-		APDU apdu = new APDU(buf);
-		ykneoOath.process(apdu);
+		simulator.transmitCommand(buf);
 		assertEquals(firstName.length(), secondName.length());
 		System.arraycopy(secondName.getBytes(), 0, buf, nameoffs, secondName.length());
-		ykneoOath.process(apdu);
-		ykneoOath.process(listApdu);
-		byte[] list = listApdu.getBuffer();
+		simulator.transmitCommand(buf);
+		byte[] list = simulator.transmitCommand(listApdu);
 		offs = 0;
 		assertEquals(YkneoOath.NAME_LIST_TAG, list[offs++]);
 		assertEquals(firstName.length() + 1, list[offs++]);
@@ -330,10 +262,8 @@ public class YkneoOathTest {
 		buf[offs++] = YkneoOath.NAME_TAG;
 		buf[offs++] = (byte) firstName.length();
 		System.arraycopy(firstName.getBytes(), 0, buf, offs, firstName.length());
-		ykneoOath.process(apdu);
-		Arrays.fill(list, (byte)0);
-		list[1] = YkneoOath.LIST_INS;
-		ykneoOath.process(listApdu);
+		simulator.transmitCommand(buf);
+		list = simulator.transmitCommand(listApdu);
 		offs = 0;
 		assertEquals(YkneoOath.NAME_LIST_TAG, list[offs++]);
 		assertEquals(secondName.length() + 1, list[offs++]);
@@ -352,10 +282,8 @@ public class YkneoOathTest {
 		buf[offs++] = type;
 		buf[offs++] = 6;
 		System.arraycopy(key.getBytes(), 0, buf, offs, key.length());
-		ykneoOath.process(apdu);
-		Arrays.fill(list, (byte)0);
-		list[1] = YkneoOath.LIST_INS;
-		ykneoOath.process(listApdu);
+		simulator.transmitCommand(buf);
+		list = simulator.transmitCommand(listApdu);
 		offs = 0;
 		assertEquals(YkneoOath.NAME_LIST_TAG, list[offs++]);
 		assertEquals(thirdName.length() + 1, list[offs++]);
@@ -394,8 +322,7 @@ public class YkneoOathTest {
 		buf[offs++] = YkneoOath.IMF_TAG;
 		buf[offs++] = (byte) imf.length;
 		System.arraycopy(imf, 0, buf, offs, imf.length);
-		APDU apdu = new APDU(buf);
-		ykneoOath.process(apdu);
+		simulator.transmitCommand(buf);
 		Arrays.fill(buf, (byte)0);
 		buf[1] = YkneoOath.CALCULATE_INS;
 		buf[3] = 1; // truncate
@@ -405,79 +332,37 @@ public class YkneoOathTest {
 		System.arraycopy(name, 0, buf, offs, name.length);
 		offs += name.length;
 		buf[offs++] = YkneoOath.CHALLENGE_TAG;
-		ykneoOath.process(apdu);
-		byte[] expected = new byte[256];
-		offs = 0;
-		expected[offs++] = YkneoOath.T_RESPONSE_TAG;
-		expected[offs++] = 5;
-		expected[offs++] = 6;
-		expected[offs++] = 0x45;
-		expected[offs++] = (byte) 0xd9;
-		expected[offs++] = 0x0f;
-		expected[offs++] = 0x25;
-		assertArrayEquals(expected, buf);
-		Arrays.fill(buf, (byte)0);
-		buf[1] = YkneoOath.CALCULATE_INS;
-		buf[3] = 1; // truncate
-		offs = 5;
-		buf[offs++] = YkneoOath.NAME_TAG;
-		buf[offs++] = (byte) name.length;
-		System.arraycopy(name, 0, buf, offs, name.length);
-		offs += name.length;
-		buf[offs++] = YkneoOath.CHALLENGE_TAG;
-		ykneoOath.process(apdu);
+		byte[] resp = simulator.transmitCommand(buf);
+		byte[] expected = new byte[] {YkneoOath.T_RESPONSE_TAG, 5, 6, 0x45, (byte) 0xd9, 0x0f, 0x25, (byte) 0x90, 0x00};
+		assertArrayEquals(expected, resp);
+		byte[] chal = new byte[] {0x00, YkneoOath.CALCULATE_INS, 0, 1, (byte) (name.length + 2), YkneoOath.NAME_TAG, (byte) name.length, 'k', 'a', 'k', 'a', YkneoOath.CHALLENGE_TAG};
+		resp = simulator.transmitCommand(chal);
 		offs = 3;
 		expected[offs++] = 0x1b;
 		expected[offs++] = (byte) 0xc5;
 		expected[offs++] = 0x4a;
 		expected[offs++] = (byte) 0x85;
-		assertArrayEquals(expected, buf);
+		assertArrayEquals(expected, resp);
 		
-		Arrays.fill(buf, (byte)0);
-		buf[1] = YkneoOath.PUT_INS;
-		offs = 5;
-		buf[offs++] = YkneoOath.NAME_TAG;
-		buf[offs++] = (byte) name.length;
-		System.arraycopy(name, 0, buf, offs, name.length);
-		offs += name.length;
-		buf[offs++] = YkneoOath.KEY_TAG;
-		buf[offs++] = (byte) (key.length + 2);
-		buf[offs++] = OathObj.HMAC_SHA1 | OathObj.HOTP_TYPE;
-		buf[offs++] = 6;
-		System.arraycopy(key, 0, buf, offs, key.length);
-		ykneoOath.process(apdu);
-		Arrays.fill(buf, (byte)0);
-		buf[1] = YkneoOath.CALCULATE_INS;
-		buf[3] = 1; // truncate..
-		offs = 5;
-		buf[offs++] = YkneoOath.NAME_TAG;
-		buf[offs++] = (byte) name.length;
-		System.arraycopy(name, 0, buf, offs, name.length);
-		offs += name.length;
-		buf[offs++] = YkneoOath.CHALLENGE_TAG;
-		ykneoOath.process(apdu);
+		byte[] put = new byte[] {0x00, YkneoOath.PUT_INS, 0x00, 0x00, (byte) (name.length + 2 + key.length + 4), YkneoOath.NAME_TAG, (byte) name.length, 'k', 'a', 'k', 'a',
+				YkneoOath.KEY_TAG, (byte) (key.length + 2),  OathObj.HMAC_SHA1 | OathObj.HOTP_TYPE, 6, 'k', 'a', 'k', 'a'};
+		simulator.transmitCommand(put);
+		
+		byte[] calc = new byte[] {0x00, YkneoOath.CALCULATE_INS, 0x00, 0x01, (byte) (name.length + 3), YkneoOath.NAME_TAG, (byte) name.length, 'k', 'a', 'k', 'a', YkneoOath.CHALLENGE_TAG};
+		resp = simulator.transmitCommand(calc);
 		offs = 3;
 		expected[offs++] = 0x16;
 		expected[offs++] = 0x53;
 		expected[offs++] = 0x24;
 		expected[offs++] = (byte) 0xdb;
-		assertArrayEquals(expected, buf);
-		Arrays.fill(buf, (byte)0);
-		buf[1] = YkneoOath.CALCULATE_INS;
-		buf[3] = 1; // truncate..
-		offs = 5;
-		buf[offs++] = YkneoOath.NAME_TAG;
-		buf[offs++] = (byte) name.length;
-		System.arraycopy(name, 0, buf, offs, name.length);
-		offs += name.length;
-		buf[offs++] = YkneoOath.CHALLENGE_TAG;
-		ykneoOath.process(apdu);
+		assertArrayEquals(expected, resp);
+		resp = simulator.transmitCommand(calc);
 		offs = 3;
 		expected[offs++] = 0x53;
 		expected[offs++] = (byte) 0xed;
 		expected[offs++] = 0x5e;
 		expected[offs++] = (byte) 0xb2;
-		assertArrayEquals(expected, buf);
+		assertArrayEquals(expected, resp);
 	}
 	
 	@Test
@@ -503,28 +388,12 @@ public class YkneoOathTest {
 		buf[offs++] = YkneoOath.IMF_TAG;
 		buf[offs++] = (byte) imf.length;
 		System.arraycopy(imf, 0, buf, offs, imf.length);
-		APDU apdu = new APDU(buf);
-		ykneoOath.process(apdu);
-		Arrays.fill(buf, (byte)0);
-		buf[1] = YkneoOath.CALCULATE_INS;
-		buf[3] = 1; // truncate
-		offs = 5;
-		buf[offs++] = YkneoOath.NAME_TAG;
-		buf[offs++] = (byte) name.length;
-		System.arraycopy(name, 0, buf, offs, name.length);
-		offs += name.length;
-		buf[offs++] = YkneoOath.CHALLENGE_TAG;
-		ykneoOath.process(apdu);
-		byte[] expected = new byte[256];
-		offs = 0;
-		expected[offs++] = YkneoOath.T_RESPONSE_TAG;
-		expected[offs++] = 5;
-		expected[offs++] = 6;
-		expected[offs++] = 0x41;
-		expected[offs++] = 0x39;
-		expected[offs++] = 0x7e;
-		expected[offs++] = (byte) 0xea;
-		assertArrayEquals(expected, buf);
+		simulator.transmitCommand(buf);
+		
+		byte[] calc = new byte[] {0x00, YkneoOath.CALCULATE_INS, 0x00, 0x01, (byte) (name.length + 2), YkneoOath.NAME_TAG, (byte) name.length, 'k', 'a', 'k', 'a', YkneoOath.CHALLENGE_TAG};
+		byte[] resp = simulator.transmitCommand(calc);
+		byte[] expected = new byte[] {YkneoOath.T_RESPONSE_TAG, 5, 6, 0x41, 0x39, 0x7e, (byte) 0xea, (byte) 0x90, 0x00};
+		assertArrayEquals(expected, resp);
 	}
 	
 	private static byte[] hmacSha1(byte[] key, byte[] data) {
