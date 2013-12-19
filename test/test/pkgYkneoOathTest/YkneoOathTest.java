@@ -29,20 +29,18 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 
 import javacard.framework.AID;
-import javacard.framework.APDU;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
-
-import com.licel.jcardsim.base.Simulator;
 
 import pkgYkneoOath.OathObj;
 import pkgYkneoOath.YkneoOath;
+
+import com.licel.jcardsim.base.Simulator;
 
 public class YkneoOathTest {
 	Simulator simulator;
