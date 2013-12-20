@@ -1,0 +1,351 @@
+Instructions
+------------
+Instructions marked as 'Require Auth' require a successful VALIDATE to be performed before they're available if a code is set.
+|========================
+|Name           |Code | Require Auth
+|PUT            |0x01 | Y
+|DELETE         |0x02 | Y
+|SET CODE       |0x03 | Y
+|RESET          |0x04 | N
+|LIST           |0xa1 | Y
+|CALCULATE      |0xa2 | Y
+|VALIDATE       |0xa3 | N
+|CALCULATE ALL  |0xa4 | Y
+|SEND REMAINING |0xa5 | Y
+|========================
+
+ALGORITHMS
+----------
+|=================
+|HMAC-SHA1   |0x01
+|HMAC-SHA256 |0x02
+|=================
+
+TYPES
+-----
+|==========
+|HOTP |0x20
+|TOTP |0x20
+|==========
+
+PROPERTIES
+----------
+|========================
+|Only increasing | 0x01 | Enforces that a challenge is always higher than the previous
+|========================
+
+SELECT INSTRUCTION
+------------------
+Request Syntax
+--------------
+|=========
+|CLA |0x00
+|INS |0xa4
+|P1  |0x00
+|P2  |0x04
+|Lc  |Length of AID
+|Data|AID
+|=========
+
+Response Syntax
+---------------
+Challenge is returned if the authentication object is set. In that case authentication is required for all commands except validate and reset.
+|=======================
+|Version tag      | 0x79
+|Version length   | Len of version
+|Version data     | Version
+|Name tag         | 0x71
+|Name length      | Len of name
+|Name data        | Name
+|Challenge tag    | 0x74
+|Challenge length | Len of challenge
+|Challenge data   | Challenge
+|=======================
+
+
+PUT INSTRUCTION
+---------------
+Request Syntax
+--------------
+|====================
+|CLA |0x00
+|INS |0x01
+|P1  |0x00
+|P2  |0x00
+|Lc  |Length of Data
+|Data|Put Data
+|====================
+
+Put Data
+--------
+|==================
+|Name tag     |0x71
+|Name length  |Len of name data
+|Name data    |Name
+|Key tag      |0x73
+|Key length   |Len of key data + 2
+|Key algorithm|High 4 bits is type, low 4 bits is algorithm
+|Digits       |Number of digits in code
+|Key data     |Key
+|Property(o)  |Property byte
+|IMF tag(o)   |0x7a (only valid for HOTP)
+|IMF length(o)|Len of imf data
+|IMF data(o)  |Imf
+|=================
+
+Response Codes
+--------------
+|=====================
+|Success      | 0x9000
+|No space     | 0x6a84
+|Auth required| 0x6982
+|Wrong syntax | 0x6a80
+|=====================
+
+DELETE INSTRUCTION
+------------------
+Request Syntax
+--------------
+|=========
+|CLA |0x00
+|INS |0x02
+|P1  |0x00
+|P2  |0x00
+|Lc  |Length of Data
+|Data|Delete Data
+|=========
+
+Delete Data
+-----------
+|=================
+|Name tag    |0x71
+|Name length |Len of name data
+|Name data   |Name
+|=================
+
+Response Codes
+--------------
+|======================
+|Success       | 0x9000
+|No such object| 0x6984
+|Auth required | 0x6982
+|Wrong syntax  | 0x6a80
+|======================
+
+SET CODE INSTRUCTION
+--------------------
+Request Syntax
+--------------
+|=========
+|CLA |0x00
+|INS |0x03
+|P1  |0x00
+|P2  |0x00
+|Lc  |Length of Data
+|Data|Set Code Data
+|=========
+
+Set Code Data
+-------------
+|======================
+|Key tag         | 0x73
+|Key length      | Len of key data + 1
+|Key algorithm   | Algorithm
+|Key data        | Key
+|Challenge tag   | 0x74
+|Challenge length| Len of challenge data
+|Challenge data  | Challenge
+|Response tag    | 0x75
+|Response length | Len of response data
+|Response data   | Response
+|======================
+
+Response Codes
+--------------
+|===============================
+|Success                | 0x9000
+|Response doesn't match | 0x6984
+|Auth required          | 0x6982
+|Wrong syntax           | 0x6a80
+|===============================
+
+RESET INSTRUCTION
+-----------------
+Request Syntax
+--------------
+|=========
+|CLA |0x00
+|INS |0x04
+|P1  |0xde
+|P2  |0xad
+|=========
+
+Response Codes
+--------------
+|================
+|Success | 0x9000
+|================
+
+LIST INSTRUCTION
+----------------
+Request Syntax
+--------------
+|=========
+|CLA |0x00
+|INS |0xa1
+|P1  |0x00
+|P2  |0x00
+|=========
+
+Response Syntax
+---------------
+Response will be a cotinual list of objects looking like:
+|====================
+|Name list tag | 0x72
+|Name length   | Len of name + 1
+|Name data     | Name
+|Algorithm     | High 4 bits is type, low 4 bits is algorithm
+|====================
+
+CALCULATE INSTRUCTION
+---------------------
+Request Syntax
+--------------
+|=========
+|CLA |0x00
+|INS |0xa1
+|P1  |0x00
+|P2  |0x00 for full response 0x01 for truncated
+|Lc  |Length of data
+|Data|Calculate data
+|=========
+
+Calculate Data
+--------------
+|=======================
+|Name tag         | 0x71
+|Name length      | Len of name data
+|Name data        | Name
+|Challenge tag    | 0x74
+|Challenge length | Len of challenge
+|Challenge data   | Challenge
+|=======================
+
+Response Syntax
+---------------
+|======================
+|Response tag    | 0x75 for full response, 0x76 for truncated
+|Response length | Len of response + 1
+|Digits          | Number of digits in the code
+|Response data   | Response
+|======================
+
+Response Codes
+--------------
+|======================
+|Success       | 0x9000
+|No such object| 0x6984
+|Auth required | 0x6982
+|Wrong syntax  | 0x6a80
+|======================
+
+VALIDATE INSTRUCTION
+--------------------
+Request Syntax
+--------------
+|=========
+|CLA |0x00
+|INS |0xa2
+|P1  |0x00
+|P2  |0x00
+|Lc  |Length of data
+|Data|Validate data
+|=========
+
+Validate Data
+-------------
+|=======================
+|Response tag     | 0x75
+|Response length  | Len of response
+|Response data    | Response
+|Challenge tag    | 0x74
+|Challenge length | Len of challenge
+|Challenge data   | Challenge
+|=======================
+
+Response Syntax
+---------------
+|======================
+|Response tag    | 0x75
+|Response length | Len of response
+|Response data   | Response
+|======================
+
+Response Codes
+--------------
+|========================
+|Success         | 0x9000
+|Auth not enabled| 0x6984
+|Wrong syntax    | 0x6a80
+|========================
+
+CALCULATE ALL INSTRUCTION
+-------------------------
+Request Syntax
+--------------
+|=========
+|CLA |0x00
+|INS |0xa4
+|P1  |0x00
+|P2  |0x00 for full response 0x01 for truncated
+|Lc  |Length of data
+|Data|Calculate all data
+|=========
+
+Calculate All Data
+------------------
+|=======================
+|Challenge tag    | 0x74
+|Challenge length | Len of challenge
+|Challenge data   | Challenge
+|=======================
+
+Response Syntax
+---------------
+For HOTP the response tag is 0x77 (No response)
+The response will be a list of the following objects:
+|===================
+|Name tag     | 0x71
+|Name length  | Length of name
+|Name data    | Name
+|Response tag | 0x77 for HOTP, 0x75 for full response or 0x76 for truncated response
+|Response len | Lenth of response + 1
+|Digits       | Number of digits in the code
+|Response data| Response
+|===================
+
+Response Codes
+--------------
+|===========================
+|Success            | 0x9000
+|More data available| 0x61xx
+|Auth required      | 0x6982
+|Wrong syntax       | 0x6a80
+|===========================
+
+SEND REMAINING INSTRUCTION
+--------------------------
+Request Syntax
+--------------
+|=========
+|CLA |0x00
+|INS |0xa5
+|P1  |0x00
+|P2  |0x00
+|=========
+
+Response Syntax
+---------------
+|=================
+|Data | Continued data where previouse command left off
+|=================
