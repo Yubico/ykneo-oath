@@ -1,8 +1,12 @@
-Instructions
-------------
+= YKNEO-OATH Protocol Specification
+
+== General Definitions
+=== Instructions
 Instructions marked as 'Require Auth' require a successful VALIDATE to be performed before they're available if a code is set.
+[options="autowidth"]
 |========================
 |Name           |Code | Require Auth
+
 |PUT            |0x01 | Y
 |DELETE         |0x02 | Y
 |SET CODE       |0x03 | Y
@@ -14,30 +18,29 @@ Instructions marked as 'Require Auth' require a successful VALIDATE to be perfor
 |SEND REMAINING |0xa5 | Y
 |========================
 
-ALGORITHMS
-----------
+=== ALGORITHMS
+[options="autowidth"]
 |=================
 |HMAC-SHA1   |0x01
 |HMAC-SHA256 |0x02
 |=================
 
-TYPES
------
+=== TYPES
+[options="autowidth"]
 |==========
 |HOTP |0x20
 |TOTP |0x20
 |==========
 
-PROPERTIES
-----------
+=== PROPERTIES
+[options="autowidth"]
 |========================
 |Only increasing | 0x01 | Enforces that a challenge is always higher than the previous
 |========================
 
-SELECT INSTRUCTION
-------------------
-Request Syntax
---------------
+== SELECT INSTRUCTION
+=== Request Syntax
+[options="autowidth"]
 |=========
 |CLA |0x00
 |INS |0xa4
@@ -47,9 +50,9 @@ Request Syntax
 |Data|AID
 |=========
 
-Response Syntax
----------------
+=== Response Syntax
 Challenge is returned if the authentication object is set. In that case authentication is required for all commands except validate and reset.
+[options="autowidth"]
 |=======================
 |Version tag      | 0x79
 |Version length   | Len of version
@@ -63,10 +66,9 @@ Challenge is returned if the authentication object is set. In that case authenti
 |=======================
 
 
-PUT INSTRUCTION
----------------
-Request Syntax
---------------
+== PUT INSTRUCTION
+=== Request Syntax
+[options="autowidth"]
 |====================
 |CLA |0x00
 |INS |0x01
@@ -76,8 +78,8 @@ Request Syntax
 |Data|Put Data
 |====================
 
-Put Data
---------
+=== Put Data
+[options="autowidth"]
 |==================
 |Name tag     |0x71
 |Name length  |Len of name data
@@ -93,8 +95,8 @@ Put Data
 |IMF data(o)  |Imf
 |=================
 
-Response Codes
---------------
+=== Response Codes
+[options="autowidth"]
 |=====================
 |Success      | 0x9000
 |No space     | 0x6a84
@@ -102,10 +104,9 @@ Response Codes
 |Wrong syntax | 0x6a80
 |=====================
 
-DELETE INSTRUCTION
-------------------
-Request Syntax
---------------
+== DELETE INSTRUCTION
+=== Request Syntax
+[options="autowidth"]
 |=========
 |CLA |0x00
 |INS |0x02
@@ -115,16 +116,16 @@ Request Syntax
 |Data|Delete Data
 |=========
 
-Delete Data
------------
+=== Delete Data
+[options="autowidth"]
 |=================
 |Name tag    |0x71
 |Name length |Len of name data
 |Name data   |Name
 |=================
 
-Response Codes
---------------
+=== Response Codes
+[options="autowidth"]
 |======================
 |Success       | 0x9000
 |No such object| 0x6984
@@ -132,10 +133,9 @@ Response Codes
 |Wrong syntax  | 0x6a80
 |======================
 
-SET CODE INSTRUCTION
---------------------
-Request Syntax
---------------
+== SET CODE INSTRUCTION
+=== Request Syntax
+[options="autowidth"]
 |=========
 |CLA |0x00
 |INS |0x03
@@ -145,8 +145,8 @@ Request Syntax
 |Data|Set Code Data
 |=========
 
-Set Code Data
--------------
+=== Set Code Data
+[options="autowidth"]
 |======================
 |Key tag         | 0x73
 |Key length      | Len of key data + 1
@@ -160,8 +160,8 @@ Set Code Data
 |Response data   | Response
 |======================
 
-Response Codes
---------------
+=== Response Codes
+[options="autowidth"]
 |===============================
 |Success                | 0x9000
 |Response doesn't match | 0x6984
@@ -169,10 +169,9 @@ Response Codes
 |Wrong syntax           | 0x6a80
 |===============================
 
-RESET INSTRUCTION
------------------
-Request Syntax
---------------
+== RESET INSTRUCTION
+=== Request Syntax
+[options="autowidth"]
 |=========
 |CLA |0x00
 |INS |0x04
@@ -180,16 +179,15 @@ Request Syntax
 |P2  |0xad
 |=========
 
-Response Codes
---------------
+=== Response Codes
+[options="autowidth"]
 |================
 |Success | 0x9000
 |================
 
-LIST INSTRUCTION
-----------------
-Request Syntax
---------------
+== LIST INSTRUCTION
+=== Request Syntax
+[options="autowidth"]
 |=========
 |CLA |0x00
 |INS |0xa1
@@ -197,9 +195,9 @@ Request Syntax
 |P2  |0x00
 |=========
 
-Response Syntax
----------------
+=== Response Syntax
 Response will be a cotinual list of objects looking like:
+[options="autowidth"]
 |====================
 |Name list tag | 0x72
 |Name length   | Len of name + 1
@@ -207,10 +205,9 @@ Response will be a cotinual list of objects looking like:
 |Algorithm     | High 4 bits is type, low 4 bits is algorithm
 |====================
 
-CALCULATE INSTRUCTION
----------------------
-Request Syntax
---------------
+== CALCULATE INSTRUCTION
+=== Request Syntax
+[options="autowidth"]
 |=========
 |CLA |0x00
 |INS |0xa1
@@ -220,8 +217,8 @@ Request Syntax
 |Data|Calculate data
 |=========
 
-Calculate Data
---------------
+=== Calculate Data
+[options="autowidth"]
 |=======================
 |Name tag         | 0x71
 |Name length      | Len of name data
@@ -231,8 +228,8 @@ Calculate Data
 |Challenge data   | Challenge
 |=======================
 
-Response Syntax
----------------
+=== Response Syntax
+[options="autowidth"]
 |======================
 |Response tag    | 0x75 for full response, 0x76 for truncated
 |Response length | Len of response + 1
@@ -240,8 +237,8 @@ Response Syntax
 |Response data   | Response
 |======================
 
-Response Codes
---------------
+=== Response Codes
+[options="autowidth"]
 |======================
 |Success       | 0x9000
 |No such object| 0x6984
@@ -249,10 +246,9 @@ Response Codes
 |Wrong syntax  | 0x6a80
 |======================
 
-VALIDATE INSTRUCTION
---------------------
-Request Syntax
---------------
+== VALIDATE INSTRUCTION
+=== Request Syntax
+[options="autowidth"]
 |=========
 |CLA |0x00
 |INS |0xa2
@@ -262,8 +258,8 @@ Request Syntax
 |Data|Validate data
 |=========
 
-Validate Data
--------------
+=== Validate Data
+[options="autowidth"]
 |=======================
 |Response tag     | 0x75
 |Response length  | Len of response
@@ -273,26 +269,25 @@ Validate Data
 |Challenge data   | Challenge
 |=======================
 
-Response Syntax
----------------
+=== Response Syntax
+[options="autowidth"]
 |======================
 |Response tag    | 0x75
 |Response length | Len of response
 |Response data   | Response
 |======================
 
-Response Codes
---------------
+=== Response Codes
+[options="autowidth"]
 |========================
 |Success         | 0x9000
 |Auth not enabled| 0x6984
 |Wrong syntax    | 0x6a80
 |========================
 
-CALCULATE ALL INSTRUCTION
--------------------------
-Request Syntax
---------------
+== CALCULATE ALL INSTRUCTION
+=== Request Syntax
+[options="autowidth"]
 |=========
 |CLA |0x00
 |INS |0xa4
@@ -302,18 +297,18 @@ Request Syntax
 |Data|Calculate all data
 |=========
 
-Calculate All Data
-------------------
+=== Calculate All Data
+[options="autowidth"]
 |=======================
 |Challenge tag    | 0x74
 |Challenge length | Len of challenge
 |Challenge data   | Challenge
 |=======================
 
-Response Syntax
----------------
+=== Response Syntax
 For HOTP the response tag is 0x77 (No response)
 The response will be a list of the following objects:
+[options="autowidth"]
 |===================
 |Name tag     | 0x71
 |Name length  | Length of name
@@ -324,8 +319,8 @@ The response will be a list of the following objects:
 |Response data| Response
 |===================
 
-Response Codes
---------------
+=== Response Codes
+[options="autowidth"]
 |===========================
 |Success            | 0x9000
 |More data available| 0x61xx
@@ -333,10 +328,9 @@ Response Codes
 |Wrong syntax       | 0x6a80
 |===========================
 
-SEND REMAINING INSTRUCTION
---------------------------
-Request Syntax
---------------
+== SEND REMAINING INSTRUCTION
+=== Request Syntax
+[options="autowidth"]
 |=========
 |CLA |0x00
 |INS |0xa5
@@ -344,8 +338,8 @@ Request Syntax
 |P2  |0x00
 |=========
 
-Response Syntax
----------------
+=== Response Syntax
+[options="autowidth"]
 |=================
 |Data | Continued data where previouse command left off
 |=================
