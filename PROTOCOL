@@ -2,7 +2,8 @@
 
 == General Definitions
 === Instructions
-Instructions marked as 'Require Auth' require a successful VALIDATE to be performed before they're available if a code is set.
+Instructions marked as 'Require Auth' require a successful VALIDATE to be
+performed before they're available if a code is set.
 [options="autowidth"]
 |========================
 |Name           |Code | Require Auth
@@ -35,10 +36,14 @@ Instructions marked as 'Require Auth' require a successful VALIDATE to be perfor
 === PROPERTIES
 [options="autowidth"]
 |========================
-|Only increasing | 0x01 | Enforces that a challenge is always higher than the previous
+|Only increasing | 0x01 |
+Enforces that a challenge is always higher than the previous
 |========================
 
 == SELECT INSTRUCTION
+Selects the applet for usage and returns, version, ID and a challenge if
+authentication is configured.
+
 === Request Syntax
 [options="autowidth"]
 |=========
@@ -51,7 +56,8 @@ Instructions marked as 'Require Auth' require a successful VALIDATE to be perfor
 |=========
 
 === Response Syntax
-Challenge is returned if the authentication object is set. In that case authentication is required for all commands except validate and reset.
+Challenge is returned if the authentication object is set. In that case
+authentication is required for all commands except validate and reset.
 [options="autowidth"]
 |=======================
 |Version tag      | 0x79
@@ -65,8 +71,9 @@ Challenge is returned if the authentication object is set. In that case authenti
 |Challenge data   | Challenge
 |=======================
 
-
 == PUT INSTRUCTION
+Adds a new (or overwrites) OATH code.
+
 === Request Syntax
 [options="autowidth"]
 |====================
@@ -105,6 +112,8 @@ Challenge is returned if the authentication object is set. In that case authenti
 |=====================
 
 == DELETE INSTRUCTION
+Deletes an existing code.
+
 === Request Syntax
 [options="autowidth"]
 |=========
@@ -134,6 +143,14 @@ Challenge is returned if the authentication object is set. In that case authenti
 |======================
 
 == SET CODE INSTRUCTION
+Configures Authentication.
+If length 0 is sent authentication is removed.
+The key to be set is expected to be a user-supplied password passed through
+1000 rounds of pbkdf2 with the ID from select as salt. 16 bytes of that is used.
+When configuring authentication you're required to send a challenge and one
+authentication-response with that key as well to confirm that the applet and
+host software calculates the same response for that key.
+
 === Request Syntax
 [options="autowidth"]
 |=========
@@ -170,6 +187,8 @@ Challenge is returned if the authentication object is set. In that case authenti
 |===============================
 
 == RESET INSTRUCTION
+Reset the applet to just-installed state.
+
 === Request Syntax
 [options="autowidth"]
 |=========
@@ -186,6 +205,8 @@ Challenge is returned if the authentication object is set. In that case authenti
 |================
 
 == LIST INSTRUCTION
+List configured codes.
+
 === Request Syntax
 [options="autowidth"]
 |=========
@@ -206,6 +227,8 @@ Response will be a cotinual list of objects looking like:
 |====================
 
 == CALCULATE INSTRUCTION
+Do calculate for one named code.
+
 === Request Syntax
 [options="autowidth"]
 |=========
@@ -247,6 +270,12 @@ Response will be a cotinual list of objects looking like:
 |======================
 
 == VALIDATE INSTRUCTION
+Validate authentication (mutually).
+The challenge for this comes from the select command, perform the correct hmac
+function over that challenge with the correct key. Then send a new challenge to
+the applet together with the response, the applet will then respond with a
+calculation of that that the host software can verify.
+
 === Request Syntax
 [options="autowidth"]
 |=========
@@ -286,6 +315,9 @@ Response will be a cotinual list of objects looking like:
 |========================
 
 == CALCULATE ALL INSTRUCTION
+Do calculation for all available codes, returns name + response for TOTP and
+just name for HOTP.
+
 === Request Syntax
 [options="autowidth"]
 |=========
@@ -313,7 +345,8 @@ The response will be a list of the following objects:
 |Name tag     | 0x71
 |Name length  | Length of name
 |Name data    | Name
-|Response tag | 0x77 for HOTP, 0x75 for full response or 0x76 for truncated response
+|Response tag |
+0x77 for HOTP, 0x75 for full response or 0x76 for truncated response
 |Response len | Lenth of response + 1
 |Digits       | Number of digits in the code
 |Response data| Response
@@ -329,6 +362,9 @@ The response will be a list of the following objects:
 |===========================
 
 == SEND REMAINING INSTRUCTION
+Send remaining data if everything didn't fit in previous response (response
+code was 61xx).
+
 === Request Syntax
 [options="autowidth"]
 |=========
