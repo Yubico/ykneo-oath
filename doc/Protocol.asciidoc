@@ -31,7 +31,7 @@ performed before they're available if a code is set.
 === TYPES
 [options="autowidth"]
 |==========
-|HOTP |0x20
+|HOTP |0x10
 |TOTP |0x20
 |==========
 
