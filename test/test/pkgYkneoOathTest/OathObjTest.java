@@ -91,9 +91,8 @@ public class OathObjTest {
 		assertEquals(ret, 20);
 		try {
 			obj.calculate(new byte[] {0x00, 0x00,  0x00,  0x01}, (short)0, (short)4, resp, (short)0);
-			throw new ISOException("shouldn't happen");
 		} catch(ISOException e) {
-			assertEquals(e.getMessage(), "6982");
+			assertEquals(0x6982, e.getReason());
 		}
 	}
 	
