@@ -205,6 +205,7 @@ public class YkneoOath extends Applet {
 		OathObj.firstObject = null;
 		OathObj.lastObject = null;
 		Util.arrayFillNonAtomic(propBuf, _0, PROP_BUF_SIZE, (byte)0);
+		rng.generateData(identity, _0, CHALLENGE_LENGTH);
 		JCSystem.requestObjectDeletion();
 	}
 
