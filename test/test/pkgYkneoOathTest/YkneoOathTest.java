@@ -394,6 +394,16 @@ public class YkneoOathTest {
 		assertArrayEquals(expected, resp);
 	}
 	
+	@Test
+	public void testReset() {
+		byte[] resp = simulator.selectAppletWithResult(aid);
+		byte[] resp2 = simulator.selectAppletWithResult(aid);
+		assertArrayEquals(resp,  resp2);
+		simulator.transmitCommand(new byte[] {0, 4, (byte) 0xde, (byte) 0xad});
+		resp2 = simulator.selectAppletWithResult(aid);
+		assertEquals(false, Arrays.equals(resp, resp2));
+	}
+	
 	private static byte[] hmacSha1(byte[] key, byte[] data) {
 		byte[] ret = null;
         try {
