@@ -1,0 +1,41 @@
+apply plugin: 'fidesmo'
+
+buildscript {
+    repositories {
+        mavenCentral()
+        maven { url('http://releases.marmeladburk.fidesmo.com/') }
+    }
+
+    dependencies {
+        classpath 'com.fidesmo:gradle-fidesmo:0.1.4'
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testCompile 'junit:junit:4.11'
+    testCompile 'com.licel:jcardsim:2.2.2'
+}
+
+fidesmo {
+    appId = 'e26b8f12'
+}
+
+javacard {
+    cap {
+        aid = "${fidesmoPrefix}:0x01"
+        packageName = 'pkgYkneoOath'
+        version = '1.0'
+        applet {
+            aid = "${fidesmoPrefix}:0x01:0x01"
+            className = 'YkneoOath'
+        }
+    }
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.0'
+}
