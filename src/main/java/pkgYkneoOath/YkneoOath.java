@@ -2,7 +2,7 @@ package pkgYkneoOath;
 
 /*
  * Copyright (c) 2013 Yubico AB
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -47,41 +47,41 @@ public class YkneoOath extends Applet {
     public static final byte VALIDATE_INS = (byte)0xa3;
     public static final byte CALCULATE_ALL_INS = (byte)0xa4;
     public static final byte SEND_REMAINING_INS = (byte)0xa5;
-	
+
 	private static final short _0 = 0;
 
 	private static final byte CHALLENGE_LENGTH = 8;
-	
+
 	private byte[] tempBuf;
 	private byte[] sendBuffer;
 
 	private OathObj authObj;
 	private OathObj scratchAuth;
 	private byte[] propBuf;
-	
+
 	private static final byte PROP_AUTH_OFFS = 0;
 	private static final byte PROP_SENT_DATA_OFFS = 1;
 	private static final byte PROP_REMAINING_DATA_LEN = 3;
 	private static final byte PROP_BUF_SIZE = PROP_REMAINING_DATA_LEN + 2;
-	
+
 	private static final short BUFSIZE = 2048;
 	private static final short TMP_BUFSIZE = 32;
-	
+
 	private RandomData rng;
-	
+
 	private byte[] identity;
-	
+
 	private static final byte[] version = {0x00,0x02,0x02};
-		
+
 	public YkneoOath() {
 		tempBuf = JCSystem.makeTransientByteArray((short) TMP_BUFSIZE, JCSystem.CLEAR_ON_DESELECT);
 		sendBuffer = JCSystem.makeTransientByteArray(BUFSIZE, JCSystem.CLEAR_ON_DESELECT);
 		propBuf = JCSystem.makeTransientByteArray(PROP_BUF_SIZE, JCSystem.CLEAR_ON_DESELECT);
 		rng = RandomData.getInstance(RandomData.ALG_PSEUDO_RANDOM);
-		
+
 		identity = new byte[CHALLENGE_LENGTH];
 		rng.generateData(identity, _0, CHALLENGE_LENGTH);
-		
+
 		authObj = new OathObj();
 		scratchAuth = new OathObj();
 	}
@@ -119,18 +119,18 @@ public class YkneoOath extends Applet {
 		byte[] buf = apdu.getBuffer();
 		apdu.setIncomingAndReceive();
 		short sendLen = 0;
-		
+
 		byte p1 = buf[ISO7816.OFFSET_P1];
 		byte p2 = buf[ISO7816.OFFSET_P2];
 		short p1p2 = Util.makeShort(p1, p2);
 		byte ins = buf[ISO7816.OFFSET_INS];
-		
+
 		if(authObj.isActive() && ins != VALIDATE_INS && ins != RESET_INS) {
 			if(propBuf[PROP_AUTH_OFFS] != 1) {
 				ISOException.throwIt(ISO7816.SW_SECURITY_STATUS_NOT_SATISFIED);
 			}
 		}
-		
+
 		switch (ins) {
 		case PUT_INS: // put
 			if(p1p2 == 0x0000) {
@@ -194,7 +194,7 @@ public class YkneoOath extends Applet {
 		default:
 			ISOException.throwIt(ISO7816.SW_INS_NOT_SUPPORTED);
 		}
-		
+
 		if(sendLen > 0) {
 			sendData(apdu, sendLen);
 		}
@@ -260,7 +260,7 @@ public class YkneoOath extends Applet {
 			byte type = buf[offs++];
 			scratchAuth.setKey(buf, offs, type, (short) (len - 1));
 			offs += (short)(len - 1);
-			
+
 			if(buf[offs++] != CHALLENGE_TAG) {
 				ISOException.throwIt(ISO7816.SW_WRONG_DATA);
 			}
@@ -300,7 +300,7 @@ public class YkneoOath extends Applet {
 			ISOException.throwIt(ISO7816.SW_DATA_INVALID);
 		}
 		offs += len;
-		
+
 		if(challenge[offs++] != CHALLENGE_TAG) {
 			ISOException.throwIt(ISO7816.SW_WRONG_DATA);
 		}
@@ -314,14 +314,14 @@ public class YkneoOath extends Applet {
 			len = object.calculateTruncated(challenge, offs, len, tempBuf, _0);
 			output[respOffs++] = T_RESPONSE_TAG;
 		}
-		
+
 		respOffs += setLength(output, respOffs, (short) (len + 1));
 		output[respOffs++] = object.getDigits();
 		Util.arrayCopy(tempBuf, _0, output, respOffs, len);
-		
+
 		return (short) (len + getLengthBytes(len) + 2);
 	}
-	
+
 	private short handleCalcAll(byte[] challenge, byte p2, byte[] output) {
 		short offs = 5;
 		if(challenge[offs++] != CHALLENGE_TAG) {
@@ -387,7 +387,7 @@ public class YkneoOath extends Applet {
 			ISOException.throwIt(ISO7816.SW_DATA_INVALID);
 		}
 	}
-	
+
 	private short calculateTotalLen() {
 		short res = 0;
 		OathObj obj;
@@ -407,25 +407,25 @@ public class YkneoOath extends Applet {
 		}
 		short len = getLength(buf, offs);
 		offs += getLengthBytes(len);
-		
+
 		if((short)(calculateTotalLen() + len + 9) > BUFSIZE) {
 			// the output will be longer than we can support, error out.
 			ISOException.throwIt(ISO7816.SW_FILE_FULL);
 		}
-		
+
 		OathObj object = OathObj.findObject(buf, offs, len);
 		if(object == null) {
 			object = OathObj.getFreeObject();
 			object.setName(buf, offs, len);
 		}
 		offs += len;
-		
+
 		if(buf[offs++] != KEY_TAG) {
 			ISOException.throwIt(ISO7816.SW_WRONG_DATA);
 		}
 		len = getLength(buf, offs);
 		offs += getLengthBytes(len);
-		
+
 		byte keyType = buf[offs++];
 		if((keyType & OathObj.HMAC_MASK) != OathObj.HMAC_SHA1 && (keyType & OathObj.HMAC_MASK) != OathObj.HMAC_SHA256) {
 			ISOException.throwIt(ISO7816.SW_WRONG_DATA);
@@ -434,14 +434,14 @@ public class YkneoOath extends Applet {
 			ISOException.throwIt(ISO7816.SW_WRONG_DATA);
 		}
 		byte digits = buf[offs++];
-		
+
 		// protect against tearing (we want to do this as late as possible)
 		object.setActive(false);
 		object.setDigits(digits);
 
 		object.setKey(buf, offs, keyType, (short) (len - 2));
 		offs += (short)(len - 2);
-		
+
 		if(offs < buf.length && buf[offs] == PROPERTY_TAG) {
 			offs++;
 			object.setProp(buf[offs++]);
@@ -461,7 +461,7 @@ public class YkneoOath extends Applet {
 		}
 		object.setActive(true);
 	}
-	
+
 	private short getLength(byte[] buf, short offs) {
 		short length = 0;
 		if(buf[offs] <= 0x7f) {
@@ -475,7 +475,7 @@ public class YkneoOath extends Applet {
 		}
 		return length;
 	}
-	
+
 	private short getLengthBytes(short len) {
 		if(len < (short)0x0080) {
 			return 1;
@@ -485,7 +485,7 @@ public class YkneoOath extends Applet {
 			return 3;
 		}
 	}
-	
+
 	private short setLength(byte[] buf, short offs, short len) {
 		if(len < (short)0x0080) {
 			buf[offs] = (byte) len;
@@ -500,14 +500,14 @@ public class YkneoOath extends Applet {
 			return 3;
 		}
 	}
-	
+
 	private void sendData(APDU apdu, short len) {
 		byte[] buf = apdu.getBuffer();
 		short maxLen = APDU.getOutBlockSize();
 		short result;
 		short remainingData;
 		short toSend = maxLen;
-		
+
 		short sentData = Util.getShort(propBuf, PROP_SENT_DATA_OFFS);
 		if(len < maxLen) {
 			toSend = len;
@@ -530,7 +530,7 @@ public class YkneoOath extends Applet {
 
 		Util.setShort(propBuf, PROP_SENT_DATA_OFFS, sentData);
 		Util.setShort(propBuf, PROP_REMAINING_DATA_LEN, remainingData);
-		
+
 		apdu.setOutgoingAndSend(_0, len);
 		if(result != ISO7816.SW_NO_ERROR) {
 			ISOException.throwIt(result);
