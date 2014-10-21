@@ -1,11 +1,11 @@
 <?xml version="1.0"?>
 <project name="ykneo-oath" default="convert" basedir=".">
   <description>Ant build for ykneo-oath applet</description>
-  <property name="src" location="applet/src"/>
+  <property name="src" location="src/main/java"/>
   <property name="build" location="applet/bin"/>
-  <property name="test.src" location="test/test"/>
+  <property name="test.src" location="src/test/java"/>
   <property name="test.build" location="test/bin"/>
-  <property name="test.resources" location="test/resources"/>
+  <property name="test.resources" location="src/test/resources"/>
   <property name="test.lib" location="test/lib"/>
   <!-- Load user specified extra properties -->
   <property file="${user.home}/javacard.properties"/>
