@@ -1,0 +1,71 @@
+apply plugin: 'javacard'
+
+buildscript {
+    repositories {
+        mavenCentral()
+        maven { url('http://releases.marmeladburk.fidesmo.com/') }
+    }
+
+    dependencies {
+        classpath 'com.fidesmo:gradle-javacard:0.2.3'
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testCompile 'junit:junit:4.11'
+    testCompile 'com.licel:jcardsim:2.2.2'
+}
+
+javacard {
+    cap {
+        def aidPrefix = "0xa0:0x00:0x00:0x05:0x27:0x21"
+        aid = "${aidPrefix}:0x01"
+        packageName = 'pkgYkneoOath'
+        version = '1.0'
+        applet {
+            aid = "${aidPrefix}:0x01:0x01"
+            className = 'YkneoOath'
+        }
+    }
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.0'
+}
+
+
+
+compileTestJava {
+    /* By default the gradle plugin compiles everthing with 1.2 compatibilty. Change the tests to be
+     * compiled with a java version suitable for the usage of jUnit.
+     */
+    sourceCompatibility = '1.6'
+    targetCompatibility = '1.6'
+}
+
+
+println(configurations.testRuntime.allDependencies.all { println(it) })
+
+
+/* Gradle prepends automatically all compile dependencies to the testCompile and testRuntime
+ * configuration. So the java card api.jar needs to be filtered from the class path otherwise
+ * it couldn't be overwritten by jcardsim.
+ *
+ * In the longterm this might be solvable in javaCard gradle plugin.
+ */
+sourceSets {
+    test {
+        runtimeClasspath = project.sourceSets.test.runtimeClasspath.filter { !it.path.endsWith("lib/api.jar") }
+    }
+}
+
+/* Gradle seems to forget the dependencies of the test task if the classpath is altered, therefore
+ * they have to be set manually.
+ */
+test {
+    dependsOn(testClasses)
+}
