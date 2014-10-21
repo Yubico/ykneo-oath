@@ -2,7 +2,7 @@ package pkgYkneoOath;
 
 /*
  * Copyright (c) 2013 Yubico AB
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -27,23 +27,23 @@ public class OathObj {
 	public static final byte HMAC_MASK = 0x0f;
 	public static final byte HMAC_SHA1 = 0x01;
 	public static final byte HMAC_SHA256 = 0x02;
-	
+
 	public static final byte OATH_MASK = (byte) 0xf0;
 	public static final byte HOTP_TYPE = 0x10;
 	public static final byte TOTP_TYPE = 0x20;
-	
+
 	public static final byte PROP_ALWAYS_INCREASING = 1 << 0;
-	
+
 	private static final short _0 = 0;
-	
+
 	private static final byte hmac_buf_size = 64;
 	private static final short NAME_LEN = 64;
 	public static final byte IMF_LEN = 4;
-	
+
 	public static OathObj firstObject;
 	public static OathObj lastObject;
 	public OathObj nextObject;
-	
+
 	private byte[] name;
 	private short nameLen;
 	private byte type;
@@ -57,22 +57,22 @@ public class OathObj {
 	private static MessageDigest sha;
 	private static MessageDigest sha256;
 	private MessageDigest digest;
-	
+
 	private byte[] lastChal;
 	private short lastOffs;
 	private byte props;
-	
+
 	private static byte[] scratchBuf;
-	
+
 	public OathObj() {
 		inner = new byte[hmac_buf_size];
 		outer = new byte[hmac_buf_size];
-		
+
 		if(scratchBuf == null) {
 			scratchBuf = JCSystem.makeTransientByteArray((short) 32, JCSystem.CLEAR_ON_DESELECT);
 		}
 	}
-	
+
 	public void setKey(byte[] buf, short offs, byte type, short len) {
 		if((type & HMAC_MASK) != HMAC_SHA1 && (type & HMAC_MASK) != HMAC_SHA256) {
 			ISOException.throwIt(ISO7816.SW_DATA_INVALID);
@@ -94,7 +94,7 @@ public class OathObj {
 			}
 			digest = sha256;
 		}
-		
+
 		this.type = type;
 		this.counter = 0;
 		Util.arrayFillNonAtomic(inner, _0, hmac_buf_size, (byte) 0x36);
@@ -104,19 +104,19 @@ public class OathObj {
             outer[i] = (byte) (buf[offs] ^ 0x5c);
         }
 	}
-	
+
 	public void setDigits(byte digits) {
 		this.digits = digits;
 	}
-	
+
 	public byte getDigits() {
 		return digits;
 	}
-	
+
 	public byte getType() {
 		return type;
 	}
-	
+
 	public void setName(byte[] buf, short offs, short len) {
 		if(name == null) {
 			name = new byte[NAME_LEN];
@@ -124,16 +124,16 @@ public class OathObj {
 		nameLen = len;
 		Util.arrayCopy(buf, offs, name, _0, len);
 	}
-	
+
 	public short getName(byte[] buf, short offs) {
 		Util.arrayCopy(name, _0, buf, offs, (short) nameLen);
 		return (short) nameLen;
 	}
-	
+
 	public short getNameLength() {
 		return (short) nameLen;
 	}
-	
+
 	public void setProp(byte props) {
 		this.props = props;
 		if((props & PROP_ALWAYS_INCREASING) == PROP_ALWAYS_INCREASING) {
@@ -145,7 +145,7 @@ public class OathObj {
 			}
 		}
 	}
-	
+
 	public void addObject() {
 		if(firstObject == null) {
 			firstObject = lastObject = this;
@@ -155,7 +155,7 @@ public class OathObj {
 			lastObject.nextObject = lastObject = this;
 		}
 	}
-	
+
 	public static OathObj getFreeObject() {
 		OathObj object;
 		for(object = firstObject; object != null; object = object.nextObject) {
@@ -169,7 +169,7 @@ public class OathObj {
 		}
 		return object;
 	}
-	
+
 	public static OathObj findObject(byte[] name, short offs, short len) {
 		OathObj object;
 		for(object = firstObject; object != null; object = object.nextObject) {
@@ -186,7 +186,7 @@ public class OathObj {
 	public short calculate(byte[] chal, short chalOffs, short len, byte[] dest,
 			short destOffs) {
 		byte[] buf = null;
-		
+
 		if((type & OATH_MASK) == TOTP_TYPE) {
 			if(len > hmac_buf_size || len == 0) {
 				ISOException.throwIt(ISO7816.SW_WRONG_DATA);
@@ -242,16 +242,16 @@ public class OathObj {
 		} else {
 			ISOException.throwIt(ISO7816.SW_DATA_INVALID);
 		}
-		
+
 		digest.reset();
 		digest.update(inner, _0, hmac_buf_size);
 		short digestLen = digest.doFinal(buf, chalOffs, len, dest, destOffs);
-		
+
 		digest.reset();
 		digest.update(outer, _0, hmac_buf_size);
 		return digest.doFinal(dest, destOffs, digestLen, dest, destOffs);
 	}
-	
+
 	public short calculateTruncated(byte[] chal, short chalOffs, short len,
 			byte[] dest, short destOffs) {
 		short length = calculate(chal, chalOffs, len, scratchBuf, _0);
@@ -262,19 +262,19 @@ public class OathObj {
 		dest[destOffs++] = scratchBuf[offs++];
 		return 4;
 	}
-	
+
 	public short getDigestLength() {
 		return digest.getLength();
 	}
-	
+
 	public boolean isActive() {
 		return active;
 	}
-	
+
 	public void setActive(boolean active) {
 		this.active = active;
 	}
-	
+
 	public void setImf(byte[] buf, short offs) {
 		if(imf == null) {
 			imf = new byte[IMF_LEN];
@@ -283,7 +283,7 @@ public class OathObj {
 			imf[i] = buf[offs++];
 		}
 	}
-	
+
 	public void clearImf() {
 		if(imf != null) {
 			Util.arrayFillNonAtomic(imf, _0, IMF_LEN, (byte)0);
