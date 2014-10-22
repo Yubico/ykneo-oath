@@ -36,6 +36,9 @@ public class YkneoOath extends Applet {
     public static final byte PROPERTY_TAG = 0x78;
     public static final byte VERSION_TAG = 0x79;
     public static final byte IMF_TAG = 0x7a;
+    public static final byte LIST_ENTRY_TAG = 0x7b;
+    public static final byte ALGORITHM_TAG = 0x07c;
+    public static final byte DIGITS_TAG = 0x7d;
 
     public static final byte PUT_INS = 0x01;
     public static final byte DELETE_INS = 0x02;
@@ -162,7 +165,9 @@ public class YkneoOath extends Applet {
 			break;
 		case LIST_INS: // list
 			if(p1p2 == 0x0000) {
-				sendLen = handleList(sendBuffer);
+				sendLen = handleList(sendBuffer, false);
+			} else if(p1p2 == 0x0100) {
+				sendLen = handleList(sendBuffer, true);
 			} else {
 				ISOException.throwIt(ISO7816.SW_WRONG_P1P2);
 			}
@@ -358,17 +363,33 @@ public class YkneoOath extends Applet {
 		return offs;
 	}
 
-	private short handleList(byte[] output) {
+	private short handleList(byte[] output, boolean extended) {
 		short offs = 0;
 		OathObj object;
 		for(object = OathObj.firstObject; object != null; object = object.nextObject) {
 			if(!object.isActive()) {
 				continue;
 			}
-			output[offs++] = NAME_LIST_TAG;
-			output[offs++] = (byte) (object.getNameLength() + 1);
-			output[offs++] = object.getType();
-			offs += object.getName(output, offs);
+
+			if(extended) {
+				byte nameLength = (byte) object.getNameLength();
+				output[offs++] = LIST_ENTRY_TAG;
+				output[offs++] = (byte) (8 + nameLength);
+				output[offs++] = NAME_TAG;
+				output[offs++] = nameLength;
+				offs += object.getName(output, offs);
+				output[offs++] = ALGORITHM_TAG;
+				output[offs++] = 1;
+				output[offs++] = object.getType();
+				output[offs++] = DIGITS_TAG;
+				output[offs++] = 1;
+				output[offs++] = object.getDigits();
+			} else {
+				output[offs++] = NAME_LIST_TAG;
+				output[offs++] = (byte) (object.getNameLength() + 1);
+				output[offs++] = object.getType();
+				offs += object.getName(output, offs);
+			}
 		}
 		return offs;
 	}
