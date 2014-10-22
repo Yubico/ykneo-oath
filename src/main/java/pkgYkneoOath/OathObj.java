@@ -19,7 +19,6 @@ package pkgYkneoOath;
 
 import javacard.framework.ISO7816;
 import javacard.framework.ISOException;
-import javacard.framework.JCSystem;
 import javacard.framework.Util;
 import javacard.security.MessageDigest;
 
@@ -37,13 +36,12 @@ public class OathObj {
 	private static final short _0 = 0;
 
 	private static final byte hmac_buf_size = 64;
-	private static final short NAME_LEN = 64;
+	public static final short NAME_LEN = 64;
 	public static final byte IMF_LEN = 4;
 
-	public static OathObj firstObject;
-	public static OathObj lastObject;
 	public OathObj nextObject;
 
+	private OathList list;
 	private byte[] name;
 	private short nameLen;
 	private byte type;
@@ -54,23 +52,16 @@ public class OathObj {
 
 	private byte[] inner;
 	private byte[] outer;
-	private static MessageDigest sha;
-	private static MessageDigest sha256;
 	private MessageDigest digest;
 
 	private byte[] lastChal;
 	private short lastOffs;
 	private byte props;
 
-	private static byte[] scratchBuf;
-
-	public OathObj() {
+	public OathObj(OathList list) {
 		inner = new byte[hmac_buf_size];
 		outer = new byte[hmac_buf_size];
-
-		if(scratchBuf == null) {
-			scratchBuf = JCSystem.makeTransientByteArray((short) 32, JCSystem.CLEAR_ON_DESELECT);
-		}
+		this.list = list;
 	}
 
 	public void setKey(byte[] buf, short offs, byte type, short len) {
@@ -84,15 +75,15 @@ public class OathObj {
 			ISOException.throwIt(ISO7816.SW_WRONG_DATA);
 		}
 		if((type & HMAC_MASK) == HMAC_SHA1) {
-			if(sha == null) {
-				sha = MessageDigest.getInstance(MessageDigest.ALG_SHA, false);
+			if(list.sha == null) {
+				list.sha = MessageDigest.getInstance(MessageDigest.ALG_SHA, false);
 			}
-			digest = sha;
+			digest = list.sha;
 		} else if((type & HMAC_MASK) == HMAC_SHA256) {
-			if(sha256 == null) {
-				sha256 = MessageDigest.getInstance(MessageDigest.ALG_SHA_256, false);
+			if(list.sha256 == null) {
+				list.sha256 = MessageDigest.getInstance(MessageDigest.ALG_SHA_256, false);
 			}
-			digest = sha256;
+			digest = list.sha256;
 		}
 
 		this.type = type;
@@ -147,40 +138,13 @@ public class OathObj {
 	}
 
 	public void addObject() {
-		if(firstObject == null) {
-			firstObject = lastObject = this;
-		} else if(firstObject == lastObject) {
-			firstObject.nextObject = lastObject = this;
+		if(list.firstObject == null) {
+			list.firstObject = list.lastObject = this;
+		} else if(list.firstObject == list.lastObject) {
+			list.firstObject.nextObject = list.lastObject = this;
 		} else {
-			lastObject.nextObject = lastObject = this;
+			list.lastObject.nextObject = list.lastObject = this;
 		}
-	}
-
-	public static OathObj getFreeObject() {
-		OathObj object;
-		for(object = firstObject; object != null; object = object.nextObject) {
-			if(!object.isActive()) {
-				break;
-			}
-		}
-		if(object == null) {
-			object = new OathObj();
-			object.addObject();
-		}
-		return object;
-	}
-
-	public static OathObj findObject(byte[] name, short offs, short len) {
-		OathObj object;
-		for(object = firstObject; object != null; object = object.nextObject) {
-			if(!object.isActive() || len != object.nameLen) {
-				continue;
-			}
-			if(Util.arrayCompare(name, offs, object.name, _0, len) == 0) {
-				break;
-			}
-		}
-		return object;
 	}
 
 	public short calculate(byte[] chal, short chalOffs, short len, byte[] dest,
@@ -215,16 +179,16 @@ public class OathObj {
 			}
 			buf = chal;
 		} else if((type & OATH_MASK) == HOTP_TYPE) {
-			Util.arrayFillNonAtomic(scratchBuf, _0, (short)8, (byte)0);
+			Util.arrayFillNonAtomic(list.scratchBuf, _0, (short)8, (byte)0);
 			if(imf == null || (imf[0] == 0 && imf[1] == 0 && imf[2] == 0 && imf[3] == 0)) {
-				Util.setShort(scratchBuf, (short) 6, counter);
+				Util.setShort(list.scratchBuf, (short) 6, counter);
 			} else {
-				Util.arrayCopyNonAtomic(imf, _0, scratchBuf, (short)4, IMF_LEN);
+				Util.arrayCopyNonAtomic(imf, _0, list.scratchBuf, (short)4, IMF_LEN);
 				short carry = 0;
 				short ctr1 = (short) ((counter >>> 8) & 0x00ff);
 				short ctr2 = (short) (counter & 0x00ff);
 	        	for(byte j = 7; j > 0; j--) {
-	        		short place = (short) (scratchBuf[j] & 0x00ff);
+	        		short place = (short) (list.scratchBuf[j] & 0x00ff);
 	        		if(j == 7) {
 	        			place += ctr2;
 	        		} else if(j == 6) {
@@ -232,11 +196,11 @@ public class OathObj {
 	        		}
 	        		place += carry;
 	        		carry = (byte) (place >>> 8);
-	        		scratchBuf[j] = (byte) (place);
+	        		list.scratchBuf[j] = (byte) (place);
 	        	}
 			}
 			counter++;
-			buf = scratchBuf;
+			buf = list.scratchBuf;
 			chalOffs = 0;
 			len = 8;
 		} else {
@@ -254,12 +218,12 @@ public class OathObj {
 
 	public short calculateTruncated(byte[] chal, short chalOffs, short len,
 			byte[] dest, short destOffs) {
-		short length = calculate(chal, chalOffs, len, scratchBuf, _0);
-		short offs = (short) (scratchBuf[(short)(length - 1)] & 0xf);
-		dest[destOffs++] = (byte) (scratchBuf[offs++] & 0x7f);
-		dest[destOffs++] = scratchBuf[offs++];
-		dest[destOffs++] = scratchBuf[offs++];
-		dest[destOffs++] = scratchBuf[offs++];
+		short length = calculate(chal, chalOffs, len, list.scratchBuf, _0);
+		short offs = (short) (list.scratchBuf[(short)(length - 1)] & 0xf);
+		dest[destOffs++] = (byte) (list.scratchBuf[offs++] & 0x7f);
+		dest[destOffs++] = list.scratchBuf[offs++];
+		dest[destOffs++] = list.scratchBuf[offs++];
+		dest[destOffs++] = list.scratchBuf[offs++];
 		return 4;
 	}
 
