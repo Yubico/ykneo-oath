@@ -37,8 +37,6 @@ task wrapper(type: Wrapper) {
     gradleVersion = '2.0'
 }
 
-
-
 compileTestJava {
     /* By default the gradle plugin compiles everthing with 1.2 compatibilty. Change the tests to be
      * compiled with a java version suitable for the usage of jUnit.
@@ -46,9 +44,6 @@ compileTestJava {
     sourceCompatibility = '1.6'
     targetCompatibility = '1.6'
 }
-
-
-println(configurations.testRuntime.allDependencies.all { println(it) })
 
 
 /* Gradle prepends automatically all compile dependencies to the testCompile and testRuntime
