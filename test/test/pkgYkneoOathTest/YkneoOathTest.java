@@ -33,7 +33,6 @@ import javacard.framework.AID;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -47,13 +46,6 @@ public class YkneoOathTest {
 	static final byte[] oathAid = new byte[] {(byte) 0xa0, 0x00, 0x00, 0x05, 0x27, 0x21, 0x01, 0x01};
 	static final byte[] listApdu = new byte[] {0x00, YkneoOath.LIST_INS, 0x00, 0x00};
 	static final AID aid = new AID(oathAid, (short)0, (byte)oathAid.length);
-
-
-	@After
-	public void tearDown() {
-		OathObj.firstObject = null;
-		OathObj.lastObject = null;
-	}
 
 	@Before
 	public void setup() {
@@ -69,20 +61,17 @@ public class YkneoOathTest {
 
 	@Test
 	public void testEmptyList() {
-		assertNull(OathObj.firstObject);
 		byte[] resp = simulator.transmitCommand(listApdu);
 		assertArrayEquals(new byte[] {(byte) 0x90, 0x00}, resp);
 	}
 
 	@Test
 	public void testLife() {
-		assertNull(OathObj.firstObject);
 		byte[] resp = simulator.transmitCommand(new byte[] {
 				0x00, YkneoOath.PUT_INS, 0x00, 0x00, 0x1d,
 				YkneoOath.NAME_TAG, 0x04, 'k', 'a', 'k', 'a',
 				YkneoOath.KEY_TAG, 0x16, 0x21, 0x06, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b
 		});
-		assertNotNull(OathObj.firstObject);
 		resp = simulator.transmitCommand(listApdu);
 		byte[] expect = new byte[] {YkneoOath.NAME_LIST_TAG, 5, 0x21, 'k', 'a', 'k', 'a', (byte) 0x90, 0x00};
 		assertArrayEquals(expect, resp);
@@ -99,7 +88,9 @@ public class YkneoOathTest {
 		simulator.transmitCommand(new byte[] {
 				0x00, YkneoOath.DELETE_INS, 0x00, 0x00, 0x06, YkneoOath.NAME_TAG, 0x04, 0x6b, 0x61, 0x6b, 0x61
 		});
-		assertEquals(false, OathObj.firstObject.isActive());
+
+		resp = simulator.transmitCommand(listApdu);
+		assertArrayEquals(new byte[] {(byte) 0x90, 0x00}, resp);
 	}
 
 	@Test
@@ -110,10 +101,7 @@ public class YkneoOathTest {
 				YkneoOath.KEY_TAG, 0x16, 0x21, 0x06, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b,
 				YkneoOath.PROPERTY_TAG, 0x01 };
 
-		assertNull(OathObj.firstObject);
 		simulator.transmitCommand(putApdu);
-		assertNotNull(OathObj.firstObject);
-		assertNull(OathObj.firstObject.nextObject);
 		byte[] resp = simulator.transmitCommand(listApdu);
 		byte[] expect = new byte[] {(byte) YkneoOath.NAME_LIST_TAG, 5, 0x21, 'k', 'a', 'k', 'a', (byte) 0x90, 0x00};
 		assertArrayEquals(expect, resp);
@@ -128,10 +116,6 @@ public class YkneoOathTest {
 				(byte) 0x80, 0x02, (byte) 0xce, (byte) 0xe4, (byte) 0xbd, 0x6c, (byte) 0xd7, (byte) 0xce, (byte) 0xb8, (byte) 0xcd, (byte) 0x90, 0x00};
 		assertArrayEquals(expect, resp);
 		simulator.transmitCommand(putApdu);
-
-		// make sure there is only one object after overwrite
-		assertEquals(OathObj.firstObject, OathObj.lastObject);
-		assertNull(OathObj.firstObject.nextObject);
 
 		resp = simulator.transmitCommand(listApdu);
 		expect = new byte[] {YkneoOath.NAME_LIST_TAG, 5, 0x21, 'k', 'a', 'k', 'a', (byte) 0x90, 0x00};
