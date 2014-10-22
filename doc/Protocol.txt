@@ -206,8 +206,8 @@ For P1 0x00 the response will be a cotinual list of objects looking like:
 |====================
 |Name list tag | 0x72
 |Name length   | Len of name + 1
-|Name data     | Name
 |Algorithm     | High 4 bits is type, low 4 bits is algorithm
+|Name data     | Name
 |====================
 
 For P1 0x01 the response will be a cotinual list of objects looking like:
