@@ -15,5 +15,9 @@ ykneo-oath-*.cap.sig
 ykneo-oath-*.tar.gz
 ykneo-oath-*.tar.gz.sig
 
+#Gradle build artifacts
+build
+.gradle
+
 # test artifact
 test/lib/jcardsim-2.2.2-all.jar
