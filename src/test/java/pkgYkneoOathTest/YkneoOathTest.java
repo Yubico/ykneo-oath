@@ -404,6 +404,36 @@ public class YkneoOathTest {
 		assertEquals(false, Arrays.equals(resp, resp2));
 	}
 
+	@Test
+	public void testListExtended() {
+		// store two entries to applet
+		byte[] put1 = new byte[] {0x00, YkneoOath.PUT_INS, 0x00, 0x00, 0, YkneoOath.NAME_TAG, 0x04,
+								  'f', 'o', 'o', '1', YkneoOath.KEY_TAG, 0x09, OathObj.TOTP_TYPE |
+								  OathObj.HMAC_SHA1, 6, 'f', 'o', 'o', ' ', 'b', 'a', 'r'};
+		byte[] put2 = new byte[] {0x00, YkneoOath.PUT_INS, 0x00, 0x00, 0, YkneoOath.NAME_TAG, 0x04,
+								  'f', 'o', 'o', '2', YkneoOath.KEY_TAG, 0x09, OathObj.HOTP_TYPE |
+								  OathObj.HMAC_SHA1, 8, 'f', 'o', 'o', ' ', 'b', 'a', 'r'};
+
+		byte[] swSuccess = new byte[] { (byte) 0x90, 0x00 };
+		assertArrayEquals(swSuccess, simulator.transmitCommand(put1));
+		assertArrayEquals(swSuccess, simulator.transmitCommand(put2));
+
+		// retrieve an exteneded list from applet
+		byte[] extendedList = new byte[] {0x00, YkneoOath.LIST_INS, 0x01, 0x00};
+		byte[] listResult = new byte[] {
+			// first entry
+			YkneoOath.LIST_ENTRY_TAG, 12,  YkneoOath.NAME_TAG, 4, 'f', 'o', 'o', '1',
+			YkneoOath.ALGORITHM_TAG, 1, OathObj.TOTP_TYPE | OathObj.HMAC_SHA1, YkneoOath.DIGITS_TAG,
+			1, 6,
+			// second entry
+			YkneoOath.LIST_ENTRY_TAG, 12, YkneoOath.NAME_TAG, 4, 'f', 'o', 'o', '2',
+			YkneoOath.ALGORITHM_TAG, 1, OathObj.HOTP_TYPE | OathObj.HMAC_SHA1, YkneoOath.DIGITS_TAG,
+			1, 8,
+		    (byte)0x90, 0x00 };
+
+		assertArrayEquals(listResult, simulator.transmitCommand(extendedList));
+	}
+
 	private static byte[] hmacSha1(byte[] key, byte[] data) {
 		byte[] ret = null;
         try {
