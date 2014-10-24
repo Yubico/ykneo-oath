@@ -174,22 +174,6 @@ host software calculates the same response for that key.
 |Wrong syntax           | 0x6a80
 |===============================
 
-== RESET INSTRUCTION
-Reset the applet to just-installed state.
-
-=== Request Syntax
-|=========
-|CLA |0x00
-|INS |0x04
-|P1  |0xde
-|P2  |0xad
-|=========
-
-=== Response Codes
-|================
-|Success | 0x9000
-|================
-
 == LIST INSTRUCTION
 List configured codes.
 
