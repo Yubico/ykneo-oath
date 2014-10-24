@@ -379,16 +379,6 @@ public class YkneoOathTest {
 	}
 
 	@Test
-	public void testReset() {
-		byte[] resp = simulator.selectAppletWithResult(aid);
-		byte[] resp2 = simulator.selectAppletWithResult(aid);
-		assertArrayEquals(resp,  resp2);
-		simulator.transmitCommand(new byte[] {0, 4, (byte) 0xde, (byte) 0xad});
-		resp2 = simulator.selectAppletWithResult(aid);
-		assertEquals(false, Arrays.equals(resp, resp2));
-	}
-
-	@Test
 	public void testListExtended() {
 		// store two entries to applet
 		byte[] put1 = new byte[] {0x00, YkneoOath.PUT_INS, 0x00, 0x00, 0, YkneoOath.NAME_TAG, 0x04,

@@ -43,7 +43,6 @@ public class YkneoOath extends Applet {
     public static final byte PUT_INS = 0x01;
     public static final byte DELETE_INS = 0x02;
     public static final byte SET_CODE_INS = 0x03;
-    public static final byte RESET_INS = 0x04;
 
     public static final byte LIST_INS = (byte)0xa1;
     public static final byte CALCULATE_INS = (byte)0xa2;
@@ -130,7 +129,7 @@ public class YkneoOath extends Applet {
 		short p1p2 = Util.makeShort(p1, p2);
 		byte ins = buf[ISO7816.OFFSET_INS];
 
-		if(authObj.isActive() && ins != VALIDATE_INS && ins != RESET_INS) {
+		if(authObj.isActive() && ins != VALIDATE_INS) {
 			if(propBuf[PROP_AUTH_OFFS] != 1) {
 				ISOException.throwIt(ISO7816.SW_SECURITY_STATUS_NOT_SATISFIED);
 			}
@@ -154,13 +153,6 @@ public class YkneoOath extends Applet {
 		case SET_CODE_INS: // set code
 			if(p1p2 == 0x0000) {
 				handleChangeCode(buf);
-			} else {
-				ISOException.throwIt(ISO7816.SW_WRONG_P1P2);
-			}
-			break;
-		case RESET_INS: // reset
-			if(p1p2 == (short)0xdead) {
-				handleReset();
 			} else {
 				ISOException.throwIt(ISO7816.SW_WRONG_P1P2);
 			}
@@ -205,15 +197,6 @@ public class YkneoOath extends Applet {
 		if(sendLen > 0) {
 			sendData(apdu, sendLen);
 		}
-	}
-
-	private void handleReset() {
-		authObj.setActive(false);
-		authList.firstObject = null;
-		authList.lastObject = null;
-		Util.arrayFillNonAtomic(propBuf, _0, PROP_BUF_SIZE, (byte)0);
-		rng.generateData(identity, _0, CHALLENGE_LENGTH);
-		JCSystem.requestObjectDeletion();
 	}
 
 	private short handleValidate(byte[] input, byte[] output) {
