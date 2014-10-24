@@ -20,7 +20,7 @@ and doc/InstallCAPFile.txt on how to install it.
 Usage
 -----
 
-The applet is used with the Yubico Authenticator Android -- see
-https://developers.yubico.com/yubioath-android/ -- or the Yubico
-Authenticator Desktop, see:
-https://developers.yubico.com/yubioath-desktop/
+The applet is used with the
+https://developers.yubico.com/yubioath-android/[Yubico Authenticator for Android],
+or the https://developers.yubico.com/yubioath-desktop/[Yubico Authenticator for Desktop].
+

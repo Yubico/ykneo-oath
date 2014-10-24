@@ -6,7 +6,7 @@
 === Instructions
 Instructions marked as 'Require Auth' require a successful VALIDATE to be
 performed before they're available if a code is set.
-[options="autowidth"]
+[options="header"]
 |========================
 |Name           |Code | Require Auth
 
@@ -22,21 +22,18 @@ performed before they're available if a code is set.
 |========================
 
 === ALGORITHMS
-[options="autowidth"]
 |=================
 |HMAC-SHA1   |0x01
 |HMAC-SHA256 |0x02
 |=================
 
 === TYPES
-[options="autowidth"]
 |==========
 |HOTP |0x10
 |TOTP |0x20
 |==========
 
 === PROPERTIES
-[options="autowidth"]
 |========================
 |Only increasing | 0x01 |
 Enforces that a challenge is always higher than the previous
@@ -47,7 +44,6 @@ Selects the applet for usage and returns, version, ID and a challenge if
 authentication is configured.
 
 === Request Syntax
-[options="autowidth"]
 |=========
 |CLA |0x00
 |INS |0xa4
@@ -60,7 +56,6 @@ authentication is configured.
 === Response Syntax
 Challenge is returned if the authentication object is set. In that case
 authentication is required for all commands except validate and reset.
-[options="autowidth"]
 |=======================
 |Version tag      | 0x79
 |Version length   | Len of version
@@ -77,7 +72,6 @@ authentication is required for all commands except validate and reset.
 Adds a new (or overwrites) OATH code.
 
 === Request Syntax
-[options="autowidth"]
 |====================
 |CLA |0x00
 |INS |0x01
@@ -88,7 +82,6 @@ Adds a new (or overwrites) OATH code.
 |====================
 
 === Put Data
-[options="autowidth"]
 |==================
 |Name tag     |0x71
 |Name length  |Len of name data
@@ -105,7 +98,6 @@ Adds a new (or overwrites) OATH code.
 |=================
 
 === Response Codes
-[options="autowidth"]
 |=====================
 |Success      | 0x9000
 |No space     | 0x6a84
@@ -117,7 +109,6 @@ Adds a new (or overwrites) OATH code.
 Deletes an existing code.
 
 === Request Syntax
-[options="autowidth"]
 |=========
 |CLA |0x00
 |INS |0x02
@@ -128,7 +119,6 @@ Deletes an existing code.
 |=========
 
 === Delete Data
-[options="autowidth"]
 |=================
 |Name tag    |0x71
 |Name length |Len of name data
@@ -136,7 +126,6 @@ Deletes an existing code.
 |=================
 
 === Response Codes
-[options="autowidth"]
 |======================
 |Success       | 0x9000
 |No such object| 0x6984
@@ -154,7 +143,6 @@ authentication-response with that key as well to confirm that the applet and
 host software calculates the same response for that key.
 
 === Request Syntax
-[options="autowidth"]
 |=========
 |CLA |0x00
 |INS |0x03
@@ -165,7 +153,6 @@ host software calculates the same response for that key.
 |=========
 
 === Set Code Data
-[options="autowidth"]
 |======================
 |Key tag         | 0x73
 |Key length      | Len of key data + 1
@@ -180,7 +167,6 @@ host software calculates the same response for that key.
 |======================
 
 === Response Codes
-[options="autowidth"]
 |===============================
 |Success                | 0x9000
 |Response doesn't match | 0x6984
@@ -192,7 +178,6 @@ host software calculates the same response for that key.
 Reset the applet to just-installed state.
 
 === Request Syntax
-[options="autowidth"]
 |=========
 |CLA |0x00
 |INS |0x04
@@ -201,7 +186,6 @@ Reset the applet to just-installed state.
 |=========
 
 === Response Codes
-[options="autowidth"]
 |================
 |Success | 0x9000
 |================
@@ -210,7 +194,6 @@ Reset the applet to just-installed state.
 List configured codes.
 
 === Request Syntax
-[options="autowidth"]
 |=========
 |CLA |0x00
 |INS |0xa1
@@ -220,7 +203,6 @@ List configured codes.
 
 === Response Syntax
 Response will be a cotinual list of objects looking like:
-[options="autowidth"]
 |====================
 |Name list tag | 0x72
 |Name length   | Len of name + 1
@@ -232,7 +214,6 @@ Response will be a cotinual list of objects looking like:
 Do calculate for one named code.
 
 === Request Syntax
-[options="autowidth"]
 |=========
 |CLA |0x00
 |INS |0xa1
@@ -243,7 +224,6 @@ Do calculate for one named code.
 |=========
 
 === Calculate Data
-[options="autowidth"]
 |=======================
 |Name tag         | 0x71
 |Name length      | Len of name data
@@ -254,7 +234,6 @@ Do calculate for one named code.
 |=======================
 
 === Response Syntax
-[options="autowidth"]
 |======================
 |Response tag    | 0x75 for full response, 0x76 for truncated
 |Response length | Len of response + 1
@@ -263,7 +242,6 @@ Do calculate for one named code.
 |======================
 
 === Response Codes
-[options="autowidth"]
 |======================
 |Success       | 0x9000
 |No such object| 0x6984
@@ -279,7 +257,6 @@ the applet together with the response, the applet will then respond with a
 calculation of that that the host software can verify.
 
 === Request Syntax
-[options="autowidth"]
 |=========
 |CLA |0x00
 |INS |0xa2
@@ -290,7 +267,6 @@ calculation of that that the host software can verify.
 |=========
 
 === Validate Data
-[options="autowidth"]
 |=======================
 |Response tag     | 0x75
 |Response length  | Len of response
@@ -301,7 +277,6 @@ calculation of that that the host software can verify.
 |=======================
 
 === Response Syntax
-[options="autowidth"]
 |======================
 |Response tag    | 0x75
 |Response length | Len of response
@@ -309,7 +284,6 @@ calculation of that that the host software can verify.
 |======================
 
 === Response Codes
-[options="autowidth"]
 |========================
 |Success         | 0x9000
 |Auth not enabled| 0x6984
@@ -321,7 +295,6 @@ Do calculation for all available codes, returns name + response for TOTP and
 just name for HOTP.
 
 === Request Syntax
-[options="autowidth"]
 |=========
 |CLA |0x00
 |INS |0xa4
@@ -332,7 +305,6 @@ just name for HOTP.
 |=========
 
 === Calculate All Data
-[options="autowidth"]
 |=======================
 |Challenge tag    | 0x74
 |Challenge length | Len of challenge
@@ -342,7 +314,6 @@ just name for HOTP.
 === Response Syntax
 For HOTP the response tag is 0x77 (No response)
 The response will be a list of the following objects:
-[options="autowidth"]
 |===================
 |Name tag     | 0x71
 |Name length  | Length of name
@@ -355,7 +326,6 @@ The response will be a list of the following objects:
 |===================
 
 === Response Codes
-[options="autowidth"]
 |===========================
 |Success            | 0x9000
 |More data available| 0x61xx
@@ -368,7 +338,6 @@ Send remaining data if everything didn't fit in previous response (response
 code was 61xx).
 
 === Request Syntax
-[options="autowidth"]
 |=========
 |CLA |0x00
 |INS |0xa5
@@ -377,7 +346,6 @@ code was 61xx).
 |=========
 
 === Response Syntax
-[options="autowidth"]
 |=================
 |Data | Continued data where previouse command left off
 |=================
