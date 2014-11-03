@@ -53,15 +53,12 @@ public class OathList {
 
 	public OathObj findObject(byte[] name, short offs, short len) {
 		OathObj object;
-		byte[] nameBuf = new byte[OathObj.NAME_LEN];
 		for(object = firstObject; object != null; object = object.nextObject) {
 			if(!object.isActive() || len != object.getNameLength()) {
 				continue;
 			}
 
-			object.getName(nameBuf, _0);
-
-			if(Util.arrayCompare(name, offs, nameBuf, _0, len) == 0) {
+			if(object.nameEquals(name, offs)) {
 				break;
 			}
 		}

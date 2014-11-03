@@ -125,6 +125,10 @@ public class OathObj {
 		return (short) nameLen;
 	}
 
+        public boolean nameEquals(byte[] other, short offs) {
+                return Util.arrayCompare(other, offs, name, _0, (short) nameLen) == 0;
+        }
+
 	public void setProp(byte props) {
 		this.props = props;
 		if((props & PROP_ALWAYS_INCREASING) == PROP_ALWAYS_INCREASING) {
