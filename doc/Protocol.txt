@@ -47,8 +47,8 @@ authentication is configured.
 |=========
 |CLA |0x00
 |INS |0xa4
-|P1  |0x00
-|P2  |0x04
+|P1  |0x04
+|P2  |0x00
 |Lc  |Length of AID
 |Data|AID
 |=========
