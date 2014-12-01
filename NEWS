@@ -3,21 +3,15 @@ ykneo-oath NEWS -- History of changes.
 * Version 0.2.2 (unreleased)
 
 * Version 0.2.1 (released 2013-11-19)
-
-** fix issue with IMF where it wasn't used if it was less than 0xffff0000
+ ** fix issue with IMF where it wasn't used if it was less than 0xffff0000
 
 * Version 0.2.0 (released 2013-09-06)
-
-** add initial-moving-factor for HOTP
-
-** change output of list command
+ ** add initial-moving-factor for HOTP
+ ** change output of list command
 
 * Version 0.1.0 (released 2013-09-04)
-
-** add output chaining to support more credentials
-
-** error on put if the added credential will make us unable to output all
+ ** add output chaining to support more credentials
+ ** error on put if the added credential will make us unable to output all
 
 * Version 0.0.1 (released 2013-09-02)
-
-** Initial release.
+ ** Initial release.
