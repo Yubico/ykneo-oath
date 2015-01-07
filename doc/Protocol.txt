@@ -197,17 +197,32 @@ List configured codes.
 |=========
 |CLA |0x00
 |INS |0xa1
-|P1  |0x00
+|P1  |0x00 for only name and type or 0x01 for name, types, and digits
 |P2  |0x00
 |=========
 
 === Response Syntax
-Response will be a cotinual list of objects looking like:
+For P1 0x00 the response will be a cotinual list of objects looking like:
 |====================
 |Name list tag | 0x72
 |Name length   | Len of name + 1
-|Name data     | Name
 |Algorithm     | High 4 bits is type, low 4 bits is algorithm
+|Name data     | Name
+|====================
+
+For P1 0x01 the response will be a cotinual list of objects looking like:
+|====================
+|List entry tag    | 0x7b
+|List entry length | Len of complete list entry (including tags, lenghfields and data)
+|Name tag          | 0x71
+|Name length       | Len of name
+|Name data         | Name
+|Algorithm tag     | 0x7c
+|Algorithm length  | 1
+|Algorithm         | High 4 bits is type, low 4 bits is algorithm
+|Digits tag        | 0x07d
+|Digits length     | 1
+|Digits            | Number of digits used for this OTP
 |====================
 
 == CALCULATE INSTRUCTION
