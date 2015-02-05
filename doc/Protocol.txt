@@ -41,7 +41,7 @@ Enforces that a challenge is always higher than the previous
 
 == SELECT INSTRUCTION
 Selects the applet for usage and returns, version, ID and a challenge if
-authentication is configured.
+authentication is configured (see the validate instruction below).
 
 === Request Syntax
 |=========
@@ -136,11 +136,11 @@ Deletes an existing code.
 == SET CODE INSTRUCTION
 Configures Authentication.
 If length 0 is sent authentication is removed.
-The key to be set is expected to be a user-supplied password passed through
-1000 rounds of pbkdf2 with the ID from select as salt. 16 bytes of that is used.
-When configuring authentication you're required to send a challenge and one
-authentication-response with that key as well to confirm that the applet and
-host software calculates the same response for that key.
+The key to be set is expected to be a user-supplied UTF-8 encoded password
+passed through 1000 rounds of PBKDF2 with the ID from select used as salt. 16
+bytes of that is used. When configuring authentication you're required to send
+a challenge and one authentication-response with that key as well to confirm
+that the applet and host software calculates the same response for that key.
 
 === Request Syntax
 |=========
