@@ -17,11 +17,11 @@ send a reset APDU. The reset is instruction 0x04, p1 0xde and p2 0xad.
 
 with opensc-tool:
 
- $ opensc-tool -s '00a4040008a000000527210101' -s '0004dead'
+ $ opensc-tool -s 00a4040008a000000527210101 -s 0004dead
 
 Or with ykneomgr:
 
- $ ykneomgr -S '00a4040008a000000527210101' -S '0004dead'
+ $ ykneomgr -S 00a4040008a000000527210101 -S 0004dead
 
 After this, close the connection, remove the card and reinsert it
 again. The applet should be reset.
