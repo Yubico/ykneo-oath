@@ -202,7 +202,7 @@ List configured codes.
 |=========
 
 === Response Syntax
-Response will be a cotinual list of objects looking like:
+Response will be a continual list of objects looking like:
 |====================
 |Name list tag | 0x72
 |Name length   | Len of name + 1
@@ -251,7 +251,7 @@ Do calculate for one named code.
 
 == VALIDATE INSTRUCTION
 Validate authentication (mutually).
-The challenge for this comes from the select command, perform the correct hmac
+The challenge for this comes from the select command, perform the correct HMAC
 function over that challenge with the correct key. Then send a new challenge to
 the applet together with the response, the applet will then respond with a
 calculation of that that the host software can verify.
@@ -320,7 +320,7 @@ The response will be a list of the following objects:
 |Name data    | Name
 |Response tag |
 0x77 for HOTP, 0x75 for full response or 0x76 for truncated response
-|Response len | Lenth of response + 1
+|Response len | Length of response + 1
 |Digits       | Number of digits in the code
 |Response data| Response
 |===================
@@ -347,5 +347,5 @@ code was 61xx).
 
 === Response Syntax
 |=================
-|Data | Continued data where previouse command left off
+|Data | Continued data where previous command left off
 |=================
