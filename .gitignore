@@ -25,6 +25,9 @@ test/lib/jacoco.jar
 test/lib/jacocoagent.jar
 test/lib/jacocoant.jar
 test/lib/jacocoreport.jar
+test/lib/asm-debug-all.jar
 
 # jacoco artifacts
 jacoco.exec
+jacoco.xml
+jacoco/

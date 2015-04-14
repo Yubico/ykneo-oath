@@ -108,6 +108,21 @@
         </batchtest>
       </junit>
     </jacoco:coverage>
+    <jacoco:report>
+      <executiondata>
+        <file file="jacoco.exec"/>
+      </executiondata>
+      <structure name="ykneo-oath project">
+        <classfiles>
+          <fileset dir="applet/bin"/>
+        </classfiles>
+        <sourcefiles encoding="UTF-8">
+          <fileset dir="applet/src"/>
+        </sourcefiles>
+      </structure>
+      <xml destfile="jacoco.xml"/>
+      <html destdir="jacoco"/>
+    </jacoco:report>
     <fail if="junit.failure" message="Unit test(s) failed.  See reports!"/>
   </target>
 </project>
