@@ -16,6 +16,14 @@
                 <groupId>org.eluder.coveralls</groupId>
                 <artifactId>coveralls-maven-plugin</artifactId>
                 <version>3.0.1</version>
+                <configuration>
+                    <sourceDirectories>
+                        <sourceDirectory>applet/src/</sourceDirectory>
+                    </sourceDirectories>
+                    <jacocoReports>
+                        <jacocoReport>jacoco.xml</jacocoReport>
+                    </jacocoReports>
+                </configuration>
             </plugin>
         </plugins>
     </build>

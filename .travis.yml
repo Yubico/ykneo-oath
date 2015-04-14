@@ -12,4 +12,4 @@ after_success:
   - curl -L https://search.maven.org/remotecontent?filepath=org/jacoco/org.jacoco.report/0.7.4.201502262128/org.jacoco.report-0.7.4.201502262128.jar -o test/lib/jacocoreport.jar
   - curl -L https://search.maven.org/remotecontent?filepath=org/ow2/asm/asm-debug-all/5.0.3/asm-debug-all-5.0.3.jar -o test/lib/asm-debug-all.jar
   - ant -Dtest.build.mock=1 coverage
-  - mvn coveralls:report -DjacocoReports=jacoco.xml
+  - mvn coveralls:report
