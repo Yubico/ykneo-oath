@@ -27,7 +27,7 @@
     </javac>
   </target>
   <target name="compileMock" depends="init" description="compile with mocked javacard" if="test.build.mock">
-    <javac srcdir="${src}" destdir="${build}" source="1.2" target="1.1" includeantruntime="false">
+    <javac srcdir="${src}" destdir="${build}" source="1.2" target="1.1" includeantruntime="false" debug="yes">
       <classpath>
         <fileset dir="${test.lib}">
           <include name="*.jar"/>
@@ -94,6 +94,7 @@
     <jacoco:coverage>
       <junit printSummary="no" fork="yes" failureproperty="junit.failure">
         <classpath>
+          <pathelement location="${test.resources}"/>
           <pathelement location="${test.build}"/>
           <pathelement path="${build}"/>
           <pathelement location="/usr/share/java/junit4.jar"/>
