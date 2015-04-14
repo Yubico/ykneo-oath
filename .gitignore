@@ -19,5 +19,12 @@ ykneo-oath-*.tar.gz.sig
 build
 .gradle
 
-# test artifact
+# test artifacts
 test/lib/jcardsim-2.2.2-all.jar
+test/lib/jacoco.jar
+test/lib/jacocoagent.jar
+test/lib/jacocoant.jar
+test/lib/jacocoreport.jar
+
+# jacoco artifacts
+jacoco.exec
