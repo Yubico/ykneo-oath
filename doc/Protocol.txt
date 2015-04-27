@@ -209,8 +209,8 @@ Response will be a continual list of objects looking like:
 |====================
 |Name list tag | 0x72
 |Name length   | Len of name + 1
-|Name data     | Name
 |Algorithm     | High 4 bits is type, low 4 bits is algorithm
+|Name data     | Name
 |====================
 
 == CALCULATE INSTRUCTION
