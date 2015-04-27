@@ -36,6 +36,7 @@ public class YkneoOath extends Applet {
     public static final byte PROPERTY_TAG = 0x78;
     public static final byte VERSION_TAG = 0x79;
     public static final byte IMF_TAG = 0x7a;
+    public static final byte ALGORITHM_TAG = 0x7b;
 
     public static final byte PUT_INS = 0x01;
     public static final byte DELETE_INS = 0x02;
@@ -111,7 +112,7 @@ public class YkneoOath extends Applet {
 				rng.generateData(buf, offs, CHALLENGE_LENGTH);
 				authObj.calculate(buf, offs, CHALLENGE_LENGTH, tempBuf, _0);
 				offs += CHALLENGE_LENGTH;
-				buf[offs++] = KEY_TAG;
+				buf[offs++] = ALGORITHM_TAG;
 				buf[offs++] = 1;
 				buf[offs++] = authObj.getType();
 			}
