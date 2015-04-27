@@ -66,6 +66,9 @@ authentication is required for all commands except validate and reset.
 |Challenge tag    | 0x74
 |Challenge length | Len of challenge
 |Challenge data   | Challenge
+|Algorithm tag    | 0x7b
+|Algorithm length | Len of algorithm (1)
+|Algorithm        | What algorithm to use
 |=======================
 
 == PUT INSTRUCTION

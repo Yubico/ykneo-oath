@@ -111,6 +111,9 @@ public class YkneoOath extends Applet {
 				rng.generateData(buf, offs, CHALLENGE_LENGTH);
 				authObj.calculate(buf, offs, CHALLENGE_LENGTH, tempBuf, _0);
 				offs += CHALLENGE_LENGTH;
+				buf[offs++] = KEY_TAG;
+				buf[offs++] = 1;
+				buf[offs++] = authObj.getType();
 			}
 			apdu.setOutgoingAndSend(_0, offs);
 			return;
