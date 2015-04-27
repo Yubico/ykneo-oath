@@ -219,7 +219,7 @@ Do calculate for one named code.
 === Request Syntax
 |=========
 |CLA |0x00
-|INS |0xa1
+|INS |0xa2
 |P1  |0x00
 |P2  |0x00 for full response 0x01 for truncated
 |Lc  |Length of data
