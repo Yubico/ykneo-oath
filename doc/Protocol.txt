@@ -96,8 +96,8 @@ Adds a new (or overwrites) OATH code.
 |Key data     |Key
 |Property(o)  |Property byte
 |IMF tag(o)   |0x7a (only valid for HOTP)
-|IMF length(o)|Length of imf data
-|IMF data(o)  |Imf
+|IMF length(o)|Length of IMF data
+|IMF data(o)  |IMF
 |=================
 
 === Response Codes
