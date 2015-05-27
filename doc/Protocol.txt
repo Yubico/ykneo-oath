@@ -49,8 +49,8 @@ authentication is configured (see the validate instruction below).
 |INS |0xa4
 |P1  |0x04
 |P2  |0x00
-|Lc  |Length of AID
-|Data|AID
+|Lc  |Length of AID (7)
+|Data|AID (0xa0 0x00 0x00 0x05 0x27 0x21 0x01)
 |=========
 
 === Response Syntax
