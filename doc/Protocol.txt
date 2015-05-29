@@ -86,18 +86,19 @@ Adds a new (or overwrites) OATH code.
 
 === Put Data
 |==================
-|Name tag     |0x71
-|Name length  |Len of name data
-|Name data    |Name
-|Key tag      |0x73
-|Key length   |Len of key data + 2
-|Key algorithm|High 4 bits is type, low 4 bits is algorithm
-|Digits       |Number of digits in code
-|Key data     |Key
-|Property(o)  |Property byte
-|IMF tag(o)   |0x7a (only valid for HOTP)
-|IMF length(o)|Len of imf data
-|IMF data(o)  |Imf
+|Name tag       |0x71
+|Name length    |Len of name data
+|Name data      |Name
+|Key tag        |0x73
+|Key length     |Len of key data + 2
+|Key algorithm  |High 4 bits is type, low 4 bits is algorithm
+|Digits         |Number of digits in code
+|Key data       |Key
+|Property tag(o)|0x78
+|Property(o)    |Property byte
+|IMF tag(o)     |0x7a (only valid for HOTP)
+|IMF length(o)  |Len of imf data
+|IMF data(o)    |Imf
 |=================
 
 === Response Codes
