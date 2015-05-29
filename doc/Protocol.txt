@@ -144,7 +144,7 @@ The key to be set is expected to be a user-supplied UTF-8 encoded password
 passed through 1000 rounds of PBKDF2 with the ID from select used as salt. 16
 bytes of that is used. When configuring authentication you're required to send
 a challenge and one authentication-response with that key as well to confirm
-that the applet and host software calculates the same response for that key.
+that the applet and the host software calculate the same response for that key.
 
 === Request Syntax
 |=========
