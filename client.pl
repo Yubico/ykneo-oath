@@ -215,7 +215,7 @@ if($action eq 'put') {
 
   my @name_p = unpack("C*", $name);
   my $key_p = unpack_hex($key);
-  my $len = scalar(@name_p) + 2 + scalar(@$key_p) + 3;
+  my $len = scalar(@name_p) + 2 + scalar(@$key_p) + 4;
   my @apdu = (0x00, 0x01, 0x00, 0x00, $len, $name_tag, scalar(@name_p), @name_p, $key_tag, scalar(@$key_p) + 2, hex($type), $digits, @$key_p);
   if($imf) {
     push(@apdu, $imf_tag);
