@@ -30,7 +30,7 @@ my $action;
 my $name;
 my $key;
 my $challenge;
-my $type = 1;
+my $type = 21;
 my $code;
 my $debug;
 my $digits = 6;
