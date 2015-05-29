@@ -49,8 +49,8 @@ authentication is configured (see the validate instruction below).
 |INS |0xa4
 |P1  |0x04
 |P2  |0x00
-|Lc  |Length of AID
-|Data|AID
+|Lc  |Length of AID (7)
+|Data|AID (0xa0 0x00 0x00 0x05 0x27 0x21 0x01)
 |=========
 
 === Response Syntax
@@ -58,16 +58,16 @@ Challenge is returned if the authentication object is set. In that case
 authentication is required for all commands except validate and reset.
 |=======================
 |Version tag      | 0x79
-|Version length   | Len of version
+|Version length   | Length of version
 |Version data     | Version
 |Name tag         | 0x71
-|Name length      | Len of name
+|Name length      | Length of name
 |Name data        | Name
 |Challenge tag    | 0x74
-|Challenge length | Len of challenge
+|Challenge length | Length of challenge
 |Challenge data   | Challenge
 |Algorithm tag    | 0x7b
-|Algorithm length | Len of algorithm (1)
+|Algorithm length | Length of algorithm (1)
 |Algorithm        | What algorithm to use
 |=======================
 
@@ -87,17 +87,17 @@ Adds a new (or overwrites) OATH code.
 === Put Data
 |==================
 |Name tag       |0x71
-|Name length    |Len of name data
+|Name length    |Length of name data
 |Name data      |Name
 |Key tag        |0x73
-|Key length     |Len of key data + 2
+|Key length     |Length of key data + 2
 |Key algorithm  |High 4 bits is type, low 4 bits is algorithm
 |Digits         |Number of digits in code
 |Key data       |Key
 |Property tag(o)|0x78
 |Property(o)    |Property byte
 |IMF tag(o)     |0x7a (only valid for HOTP)
-|IMF length(o)  |Len of imf data
+|IMF length(o)  |Length of imf data
 |IMF data(o)    |Imf
 |=================
 
@@ -125,7 +125,7 @@ Deletes an existing code.
 === Delete Data
 |=================
 |Name tag    |0x71
-|Name length |Len of name data
+|Name length |Length of name data
 |Name data   |Name
 |=================
 
@@ -159,14 +159,14 @@ that the applet and host software calculates the same response for that key.
 === Set Code Data
 |======================
 |Key tag         | 0x73
-|Key length      | Len of key data + 1
+|Key length      | Length of key data + 1
 |Key algorithm   | Algorithm
 |Key data        | Key
 |Challenge tag   | 0x74
-|Challenge length| Len of challenge data
+|Challenge length| Length of challenge data
 |Challenge data  | Challenge
 |Response tag    | 0x75
-|Response length | Len of response data
+|Response length | Length of response data
 |Response data   | Response
 |======================
 
@@ -209,7 +209,7 @@ List configured codes.
 Response will be a continual list of objects looking like:
 |====================
 |Name list tag | 0x72
-|Name length   | Len of name + 1
+|Name length   | Length of name + 1
 |Algorithm     | High 4 bits is type, low 4 bits is algorithm
 |Name data     | Name
 |====================
@@ -230,17 +230,17 @@ Do calculate for one named code.
 === Calculate Data
 |=======================
 |Name tag         | 0x71
-|Name length      | Len of name data
+|Name length      | Length of name data
 |Name data        | Name
 |Challenge tag    | 0x74
-|Challenge length | Len of challenge
+|Challenge length | Length of challenge
 |Challenge data   | Challenge
 |=======================
 
 === Response Syntax
 |======================
 |Response tag    | 0x75 for full response, 0x76 for truncated
-|Response length | Len of response + 1
+|Response length | Length of response + 1
 |Digits          | Number of digits in the code
 |Response data   | Response
 |======================
@@ -273,17 +273,17 @@ calculation of that that the host software can verify.
 === Validate Data
 |=======================
 |Response tag     | 0x75
-|Response length  | Len of response
+|Response length  | Length of response
 |Response data    | Response
 |Challenge tag    | 0x74
-|Challenge length | Len of challenge
+|Challenge length | Length of challenge
 |Challenge data   | Challenge
 |=======================
 
 === Response Syntax
 |======================
 |Response tag    | 0x75
-|Response length | Len of response
+|Response length | Length of response
 |Response data   | Response
 |======================
 
@@ -311,7 +311,7 @@ just name for HOTP.
 === Calculate All Data
 |=======================
 |Challenge tag    | 0x74
-|Challenge length | Len of challenge
+|Challenge length | Length of challenge
 |Challenge data   | Challenge
 |=======================
 
