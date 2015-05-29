@@ -158,7 +158,7 @@ if($action eq 'change-code') {
   my $hash_func = \&hmac_sha1; # XXX: figure out when to use sha256
   my $code_pack = pbkdf2($key, $id_p, $pw_iterations, 16, \&hmac_sha1);
   my @code_p = unpack('C*', $code_pack);
-  my $len = scalar(@code_p) + 2;
+  my $len = scalar(@code_p) + 3;
 
   for(my $i = 0; $i < $challenge_length; $i++) {
     $challenge .= sprintf("%02x ", rand(0xff));
