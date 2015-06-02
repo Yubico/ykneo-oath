@@ -1,24 +1,21 @@
-YubiKey NEO App: OATH
-=====================
+== YubiKey NEO App: OATH
 
 This project implement the HOTP/TOTP card functionality used on the
 YubiKey NEO device that is sold by Yubico.  Its primary use is to use
 the YubiKey NEO to generate OATH HOTP/TOTP one-time-passwords.
 
-License
--------
+
+=== License
 
 This program is released under the GPLv3+ and Copyright is owned by
 Yubico.  See COPYING for more information.
 
-Building
---------
+=== Building
 
 See doc/Building.txt for information on how to build the source code
 and doc/InstallCAPFile.txt on how to install it.
 
-Usage
------
+=== Usage
 
 The applet is used with the
 https://developers.yubico.com/yubioath-android/[Yubico Authenticator for Android],
