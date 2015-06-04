@@ -215,10 +215,11 @@ Response will be a continual list of objects looking like:
 |====================
 
 === Response Codes
-|=====================
-|Success      | 0x9000
-|Auth required| 0x6982
-|=====================
+|===========================
+|Success            | 0x9000
+|More data available| 0x61xx
+|Auth required      | 0x6982
+|===========================
 
 == CALCULATE INSTRUCTION
 Do calculate for one named code.
