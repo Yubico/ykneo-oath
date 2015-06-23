@@ -219,6 +219,7 @@ Response will be a continual list of objects looking like:
 |Success            | 0x9000
 |More data available| 0x61xx
 |Auth required      | 0x6982
+|Generic error      | 0x6581
 |===========================
 
 == CALCULATE INSTRUCTION
@@ -258,6 +259,7 @@ Do calculate for one named code.
 |No such object| 0x6984
 |Auth required | 0x6982
 |Wrong syntax  | 0x6a80
+|Generic error | 0x6581
 |======================
 
 == VALIDATE INSTRUCTION
@@ -299,6 +301,7 @@ calculation of that that the host software can verify.
 |Success         | 0x9000
 |Auth not enabled| 0x6984
 |Wrong syntax    | 0x6a80
+|Generic error   | 0x6581
 |========================
 
 == CALCULATE ALL INSTRUCTION
@@ -342,6 +345,7 @@ The response will be a list of the following objects:
 |More data available| 0x61xx
 |Auth required      | 0x6982
 |Wrong syntax       | 0x6a80
+|Generic error      | 0x6581
 |===========================
 
 == SEND REMAINING INSTRUCTION
