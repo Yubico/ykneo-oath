@@ -1,6 +1,6 @@
 ykneo-oath NEWS -- History of changes.
 
-* Version 1.0.0 (unreleased)
+* Version 1.0.0 (released 2015-11-19)
  ** add what algorithm is used for authentication code to select response.
 
 * Version 0.2.1 (released 2013-11-19)
