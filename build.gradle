@@ -59,7 +59,7 @@ sourceSets {
 	    srcDir 'test/test'
 	}
 	resources {
-	    srcDir ' test/resources'
+	    srcDir 'test/resources'
 	}
 
 	/* Gradle prepends automatically all compile dependencies to the testCompile and testRuntime
