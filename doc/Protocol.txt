@@ -272,7 +272,7 @@ calculation of that that the host software can verify.
 === Request Syntax
 |=========
 |CLA |0x00
-|INS |0xa2
+|INS |0xa3
 |P1  |0x00
 |P2  |0x00
 |Lc  |Length of data
