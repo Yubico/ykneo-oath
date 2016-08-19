@@ -87,7 +87,7 @@ Adds a new (or overwrites) OATH code.
 === Put Data
 |==================
 |Name tag       |0x71
-|Name length    |Length of name data
+|Name length    |Length of name data, max 64 bytes
 |Name data      |Name
 |Key tag        |0x73
 |Key length     |Length of key data + 2
