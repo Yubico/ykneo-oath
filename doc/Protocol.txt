@@ -1,2 +1,2 @@
-= YKNEO-OATH Protocol Specification
+== YKNEO-OATH Protocol Specification
 The protocol speification has been moved. You can now find it here: https://developers.yubico.com/OATH/YKOATH_Protocol.html
