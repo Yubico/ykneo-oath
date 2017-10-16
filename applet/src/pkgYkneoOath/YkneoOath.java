@@ -56,6 +56,7 @@ public class YkneoOath extends Applet {
 	private byte[] tempBuf;
 	private byte[] sendBuffer;
 
+	private OathList authList;
 	private OathObj authObj;
 	private OathObj scratchAuth;
 	private byte[] propBuf;
@@ -83,8 +84,9 @@ public class YkneoOath extends Applet {
 		identity = new byte[CHALLENGE_LENGTH];
 		rng.generateData(identity, _0, CHALLENGE_LENGTH);
 
-		authObj = new OathObj();
-		scratchAuth = new OathObj();
+		authList = new OathList();
+		authObj = new OathObj(authList);
+		scratchAuth = new OathObj(authList);
 	}
 
 	public static void install(byte[] bArray, short bOffset, byte bLength) {
@@ -206,8 +208,8 @@ public class YkneoOath extends Applet {
 
 	private void handleReset() {
 		authObj.setActive(false);
-		OathObj.firstObject = null;
-		OathObj.lastObject = null;
+		authList.firstObject = null;
+		authList.lastObject = null;
 		Util.arrayFillNonAtomic(propBuf, _0, PROP_BUF_SIZE, (byte)0);
 		rng.generateData(identity, _0, CHALLENGE_LENGTH);
 		JCSystem.requestObjectDeletion();
@@ -299,7 +301,7 @@ public class YkneoOath extends Applet {
 		}
 		short len = getLength(challenge, offs);
 		offs += getLengthBytes(len);
-		OathObj object = OathObj.findObject(challenge, offs, len);
+		OathObj object = authList.findObject(challenge, offs, len);
 		if(object == null) {
 			ISOException.throwIt(ISO7816.SW_DATA_INVALID);
 		}
@@ -336,7 +338,7 @@ public class YkneoOath extends Applet {
 
 		offs = 0;
 		OathObj obj;
-		for(obj = OathObj.firstObject; obj != null; obj = obj.nextObject) {
+		for(obj = authList.firstObject; obj != null; obj = obj.nextObject) {
 			if(!obj.isActive()) {
 				continue;
 			}
@@ -365,7 +367,7 @@ public class YkneoOath extends Applet {
 	private short handleList(byte[] output) {
 		short offs = 0;
 		OathObj object;
-		for(object = OathObj.firstObject; object != null; object = object.nextObject) {
+		for(object = authList.firstObject; object != null; object = object.nextObject) {
 			if(!object.isActive()) {
 				continue;
 			}
@@ -384,7 +386,7 @@ public class YkneoOath extends Applet {
 		}
 		short len = getLength(buf, offs);
 		offs += getLengthBytes(len);
-		OathObj object = OathObj.findObject(buf, offs, len);
+		OathObj object = authList.findObject(buf, offs, len);
 		if(object != null) {
 			object.setActive(false);
 		} else {
@@ -395,7 +397,7 @@ public class YkneoOath extends Applet {
 	private short calculateTotalLen() {
 		short res = 0;
 		OathObj obj;
-		for(obj = OathObj.firstObject; obj != null; obj = obj.nextObject) {
+		for(obj = authList.firstObject; obj != null; obj = obj.nextObject) {
 			if(!obj.isActive()) {
 				continue;
 			}
@@ -417,9 +419,9 @@ public class YkneoOath extends Applet {
 			ISOException.throwIt(ISO7816.SW_FILE_FULL);
 		}
 
-		OathObj object = OathObj.findObject(buf, offs, len);
+		OathObj object = authList.findObject(buf, offs, len);
 		if(object == null) {
-			object = OathObj.getFreeObject();
+			object = authList.getFreeObject();
 			object.setName(buf, offs, len);
 		}
 		offs += len;
