@@ -24,7 +24,7 @@ Installing CAP file to NEO
 --------------------------
 
 Install the gpshell tool from Global Platform:
-http://sourceforge.net/projects/globalplatform/
+https://sourceforge.net/projects/globalplatform/
 
 We have tested the combination of GlobalPlatform Library version
 6.0.0, GPShell version 1.4.4, and gppcscconnectionplugin version
