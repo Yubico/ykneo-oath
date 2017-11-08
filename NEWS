@@ -1,6 +1,7 @@
 ykneo-oath NEWS -- History of changes.
 
-* Version 1.0.1 (unreleased)
+* Version 1.0.1 (released 2017-11-08)
+ ** fix issue where authobject is inactivated before keys are removed
 
 * Version 1.0.0 (released 2015-11-19)
  ** add what algorithm is used for authentication code to select response.
