@@ -45,7 +45,7 @@ compileTestJava {
     targetCompatibility = '1.6'
 }
 
-/* Change soruce sets to be compatible with the original yubico project layout.
+/* Change source sets to be compatible with the original yubico project layout.
  */
 sourceSets {
     main {
@@ -59,7 +59,7 @@ sourceSets {
 	    srcDir 'test/test'
 	}
 	resources {
-	    srcDir ' test/resources'
+	    srcDir 'test/resources'
 	}
 
 	/* Gradle prepends automatically all compile dependencies to the testCompile and testRuntime
