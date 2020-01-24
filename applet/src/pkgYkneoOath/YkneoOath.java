@@ -325,7 +325,7 @@ public class YkneoOath extends Applet {
 			output[respOffs++] = T_RESPONSE_TAG;
 		}
 
-		respOffs += setLength(output, respOffs, (short) (len + 1));
+		respOffs += setLength(output, respOffs, len + 1);
 		output[respOffs++] = object.getDigits();
 		Util.arrayCopyNonAtomic(tempBuf, _0, output, respOffs, len);
 
@@ -474,12 +474,13 @@ public class YkneoOath extends Applet {
 
 	private short getLength(byte[] buf, short offs) {
 		short length = 0;
-		if(buf[offs] <= 0x7f) {
-			length = buf[offs];
-		} else if(buf[offs] == (byte)0x81) {
-			length = buf[(short)(offs + 1)];
-		} else if(buf[offs] == (byte)0x82) {
+		int len = buf[offs] & 0xff;
+		if((len & 0x82) == 0x82) {
 			length = Util.getShort(buf, (short) (offs + 1));
+		} else if((len & 0x81) == 0x81) {
+			length = (short)(buf[offs + 1] & 0xff);
+		} else if(len <= 0x7f) {
+			length = buf[offs];
 		} else {
 			ISOException.throwIt(ISO7816.SW_DATA_INVALID);
 		}
@@ -496,17 +497,17 @@ public class YkneoOath extends Applet {
 		}
 	}
 
-	private short setLength(byte[] buf, short offs, short len) {
-		if(len < (short)0x0080) {
+	private short setLength(byte[] buf, short offs, int len) {
+		if(len < 0x80) {
 			buf[offs] = (byte) len;
 			return 1;
-		} else if(len <= (short)0x00ff) {
+		} else if(len <= 0xff) {
 			buf[offs++] = (byte)0x81;
 			buf[offs] = (byte) len;
 			return 2;
 		} else {
 			buf[offs++] = (byte)0x82;
-			Util.setShort(buf, offs, len);
+			Util.setShort(buf, offs, (short)len);
 			return 3;
 		}
 	}
