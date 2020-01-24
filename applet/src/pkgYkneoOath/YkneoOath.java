@@ -138,14 +138,18 @@ public class YkneoOath extends Applet {
 		switch (ins) {
 		case PUT_INS: // put
 			if(p1p2 == 0x0000) {
+				javacard.framework.JCSystem.beginTransaction();
 				handlePut(buf);
+				javacard.framework.JCSystem.commitTransaction();
 			} else {
 				ISOException.throwIt(ISO7816.SW_WRONG_P1P2);
 			}
 			break;
 		case DELETE_INS: // delete
 			if(p1p2 == 0x0000) {
+				javacard.framework.JCSystem.beginTransaction();
 				handleDelete(buf);
+				javacard.framework.JCSystem.commitTransaction();
 			} else {
 				ISOException.throwIt(ISO7816.SW_WRONG_P1P2);
 			}
@@ -159,7 +163,9 @@ public class YkneoOath extends Applet {
 			break;
 		case RESET_INS: // reset
 			if(p1p2 == (short)0xdead) {
+				javacard.framework.JCSystem.beginTransaction();
 				handleReset();
+				javacard.framework.JCSystem.commitTransaction();
 			} else {
 				ISOException.throwIt(ISO7816.SW_WRONG_P1P2);
 			}
@@ -321,7 +327,7 @@ public class YkneoOath extends Applet {
 
 		respOffs += setLength(output, respOffs, (short) (len + 1));
 		output[respOffs++] = object.getDigits();
-		Util.arrayCopy(tempBuf, _0, output, respOffs, len);
+		Util.arrayCopyNonAtomic(tempBuf, _0, output, respOffs, len);
 
 		return (short) (len + getLengthBytes(len) + 2);
 	}
@@ -516,7 +522,7 @@ public class YkneoOath extends Applet {
 		if(len < maxLen) {
 			toSend = len;
 		}
-		Util.arrayCopy(sendBuffer, sentData, buf, _0, toSend);
+		Util.arrayCopyNonAtomic(sendBuffer, sentData, buf, _0, toSend);
 		if(len > maxLen) {
 			remainingData = (short) (len - maxLen);
 			sentData += maxLen;
