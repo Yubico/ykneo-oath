@@ -2,7 +2,7 @@ language: java
 jdk:
   - openjdk8
 install:
-  - sudo apt-get install junit4
+  - sudo apt-get install junit4 ant-optional
   - curl -L https://github.com/licel/jcardsim/raw/jc2.2.2/jcardsim-2.2.2-all.jar -o test/lib/jcardsim-2.2.2-all.jar
 script:
   - ant -Dtest.build.mock=1 test
