@@ -1,5 +1,8 @@
 == YubiKey NEO App: OATH
 
+NOTE: This project is in maintenance mode, it's in use on the YubiKey NEO
+but not on newer Yubico products. No development is happening on this.
+
 This project implement the HOTP/TOTP card functionality used on the
 YubiKey NEO device that is sold by Yubico.  Its primary use is to use
 the YubiKey NEO to generate OATH HOTP/TOTP one-time-passwords.
